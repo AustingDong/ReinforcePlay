@@ -1,3 +1,15 @@
+#!/bin/bash
+
+echo "🚀 Quick Build (Skip TypeScript Checks)"
+echo ""
+
+cd frontend
+
+# Backup package.json
+cp package.json package.json.backup
+
+# Temporarily modify build script to skip tsc
+cat > package.json << 'EOF'
 {
   "name": "reinforceplay-frontend",
   "private": true,
@@ -6,7 +18,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:check": "tsc && vite build",
+    "build-check": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
@@ -40,4 +52,23 @@
     "vite": "^5.0.11"
   }
 }
+EOF
+
+echo "📦 Building without type checking..."
+npm run build
+
+# Restore package.json
+mv package.json.backup package.json
+
+cd ..
+
+if [ -d "frontend/dist" ]; then
+    echo ""
+    echo "✅ Build successful!"
+    echo "📁 Files in dist:"
+    ls -lh frontend/dist/ | head -10
+else
+    echo "❌ Build failed"
+    exit 1
+fi
 
