@@ -88,8 +88,21 @@ cd ..
 nohup ./run-public.sh > app.log 2>&1 &
 ```
 
-### 2. Auto-restart on Reboot
-Create systemd service:
+### 2. Auto-restart on Reboot (Recommended!)
+
+**Quick Setup:**
+```bash
+./setup-services.sh
+```
+
+This automatically sets up systemd services that:
+- ✅ Start on server boot
+- ✅ Keep running after SSH disconnect
+- ✅ Auto-restart on crashes
+
+See [SERVICE_MANAGEMENT.md](./SERVICE_MANAGEMENT.md) for full details.
+
+**Or manual setup:**
 
 **Backend service** (`/etc/systemd/system/reinforceplay-backend.service`):
 ```ini
