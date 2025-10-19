@@ -25,6 +25,15 @@ const algorithmTree: TreeNode = {
   features: ['Agent', 'Environment', 'Reward', 'Policy'],
   children: [
     {
+      id: 8,
+      name: 'Introduction to RL',
+      year: '1950s',
+      category: 'foundation',
+      type: 'framework',
+      description: 'Start your RL journey here!',
+      features: ['Basics', 'Concepts', 'Overview'],
+    },
+    {
       id: 0,
       name: 'Multi-Armed Bandit',
       year: '1952',
@@ -183,64 +192,87 @@ function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps)
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: level * 0.1 }}
+        transition={{ delay: level * 0.05 }}
         className="relative"
       >
+        {/* Glow Effect */}
+        {isLesson && (
+          <motion.div
+            animate={{
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className={`absolute inset-0 rounded-xl blur-lg ${
+              isCompleted ? 'bg-green-400' : 'bg-purple-400'
+            } opacity-30`}
+          />
+        )}
+
         {/* Card */}
         <motion.div
-          whileHover={{ scale: isLesson ? 1.05 : 1.02 }}
+          whileHover={{ 
+            scale: isLesson ? 1.08 : 1.03,
+            rotateY: isLesson ? 5 : 0,
+          }}
           onClick={handleClick}
           className={`
-            relative p-4 rounded-xl shadow-lg border-2 backdrop-blur-sm
+            relative p-3 rounded-xl shadow-2xl border backdrop-blur-md
             ${isLesson ? 'cursor-pointer' : hasChildren ? 'cursor-pointer' : ''}
-            ${isCompleted ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white'}
-            transition-all duration-300 hover:shadow-xl
-            min-w-[280px] max-w-[320px]
+            ${isCompleted 
+              ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50' 
+              : 'border-purple-300 bg-gradient-to-br from-white to-purple-50'
+            }
+            transition-all duration-300 hover:shadow-2xl
+            w-[180px] sm:w-[200px]
           `}
           style={{
-            marginLeft: level * 20,
+            marginLeft: level * 10,
           }}
         >
           {/* Status Icon */}
           {isLesson && (
-            <div className="absolute -top-2 -right-2">
+            <motion.div
+              animate={{ rotate: isCompleted ? 360 : 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute -top-2 -right-2"
+            >
               {isCompleted ? (
-                <CheckCircle className="w-6 h-6 text-green-500 fill-green-100" />
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  <CheckCircle className="w-5 h-5 text-green-500 fill-green-100" />
+                </motion.div>
               ) : (
-                <Circle className="w-6 h-6 text-gray-400" />
+                <Circle className="w-5 h-5 text-purple-400" />
               )}
-            </div>
+            </motion.div>
           )}
 
-          {/* Header */}
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1">
-              <h3 className="font-bold text-lg mb-1">{node.name}</h3>
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <Calendar className="w-3 h-3" />
-                <span>{node.year}</span>
-              </div>
+          {/* Header - Compact */}
+          <div className="mb-2">
+            <h3 className="font-bold text-sm mb-1 text-gray-900">{node.name}</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">{node.year}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${typeColors[node.type]}`}>
+                {node.type === 'on-policy' && '📈'}
+                {node.type === 'off-policy' && '🔄'}
+                {node.type === 'exploration' && '🎯'}
+                {node.type === 'framework' && '🏗️'}
+              </span>
             </div>
           </div>
 
-          {/* Type Badge */}
-          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border mb-2 ${typeColors[node.type]}`}>
-            {node.type === 'on-policy' && '📈'}
-            {node.type === 'off-policy' && '🔄'}
-            {node.type === 'exploration' && '🎯'}
-            {node.type === 'framework' && '🏗️'}
-            <span>{node.type}</span>
-          </div>
+          {/* Description - Compact */}
+          <p className="text-xs text-gray-600 mb-2 line-clamp-2">{node.description}</p>
 
-          {/* Description */}
-          <p className="text-sm text-gray-600 mb-3">{node.description}</p>
-
-          {/* Features */}
+          {/* Features - Compact */}
           <div className="flex flex-wrap gap-1">
-            {node.features.map((feature, idx) => (
+            {node.features.slice(0, 3).map((feature, idx) => (
               <span
                 key={idx}
-                className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full"
+                className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded"
               >
                 {feature}
               </span>
@@ -249,16 +281,19 @@ function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps)
 
           {/* Action hint */}
           {isLesson && (
-            <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-xs text-gray-500">Click to learn</span>
-              <BookOpen className="w-4 h-4 text-gray-400" />
-            </div>
+            <motion.div
+              whileHover={{ x: 5 }}
+              className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between text-xs"
+            >
+              <span className="text-gray-500 font-medium">Learn →</span>
+              <BookOpen className="w-3 h-3 text-purple-400" />
+            </motion.div>
           )}
 
           {hasChildren && !isLesson && (
-            <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-center">
+            <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-center">
               <motion.button
-                className="text-xs text-blue-600 font-semibold"
+                className="text-xs text-purple-600 font-semibold"
                 animate={{ rotate: isExpanded ? 180 : 0 }}
               >
                 ▼
@@ -269,15 +304,27 @@ function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps)
 
         {/* Connection Line to Children */}
         {hasChildren && isExpanded && (
-          <div className="w-0.5 h-8 bg-gradient-to-b from-gray-300 to-transparent mx-auto" />
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 32 }}
+            className="w-0.5 bg-gradient-to-b from-purple-400 to-transparent mx-auto"
+          />
         )}
       </motion.div>
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className={`flex ${node.children!.length > 1 ? 'gap-6' : ''} mt-4 relative`}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`flex flex-wrap justify-center ${node.children!.length > 1 ? 'gap-2 sm:gap-4' : ''} mt-4 relative`}
+        >
           {node.children!.length > 1 && (
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent -translate-y-4" />
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent -translate-y-4"
+            />
           )}
           {node.children!.map((child, idx) => (
             <TreeNodeCard
@@ -288,7 +335,7 @@ function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps)
               onSelect={onSelect}
             />
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   )
@@ -307,103 +354,178 @@ export default function AlgorithmTree() {
     : new Set(completedChapters)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+        {/* Floating Particles */}
+        {[...Array(100)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            animate={{
+              x: [
+                Math.random() * window.innerWidth,
+                Math.random() * window.innerWidth,
+              ],
+              y: [
+                Math.random() * window.innerHeight,
+                Math.random() * window.innerHeight,
+              ],
+              opacity: [0, Math.random(), 0],
+              scale: [0, Math.random() * 2, 0],
+            }}
+            transition={{
+              duration: 5 + Math.random() * 10,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+          />
+        ))}
+
+        {/* Large Floating Shapes */}
+        {[...Array(10)].map((_, i) => (
+          <motion.div
+            key={`shape-${i}`}
+            className="absolute rounded-full opacity-10"
+            style={{
+              width: 100 + Math.random() * 300,
+              height: 100 + Math.random() * 300,
+              background: `radial-gradient(circle, ${
+                ['#60A5FA', '#A78BFA', '#F472B6'][Math.floor(Math.random() * 3)]
+              }, transparent)`,
+            }}
+            animate={{
+              x: [
+                Math.random() * window.innerWidth,
+                Math.random() * window.innerWidth,
+              ],
+              y: [
+                Math.random() * window.innerHeight,
+                Math.random() * window.innerHeight,
+              ],
+              rotate: [0, 360],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 20 + Math.random() * 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, white 1px, transparent 1px),
+              linear-gradient(to bottom, white 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 container mx-auto px-4 py-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-transparent bg-clip-text">
-            RL Algorithm Family Tree
-          </h1>
-          <p className="text-xl text-gray-600 mb-6">
-            Explore the evolution and relationships of reinforcement learning algorithms
+          <motion.h1
+            animate={{
+              textShadow: [
+                '0 0 20px rgba(139, 92, 246, 0.5)',
+                '0 0 40px rgba(139, 92, 246, 0.8)',
+                '0 0 20px rgba(139, 92, 246, 0.5)',
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-4xl md:text-5xl font-bold mb-3 text-white"
+          >
+            🧠 RL Algorithm Universe
+          </motion.h1>
+          <p className="text-lg text-purple-200">
+            Discover the evolution of reinforcement learning
           </p>
 
-          {/* Legend */}
-          <div className="flex justify-center gap-6 flex-wrap">
+          {/* Compact Stats Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-6 mt-6 px-6 py-3 bg-white bg-opacity-10 backdrop-blur-xl rounded-full border border-white border-opacity-20"
+          >
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500" />
-              <span className="text-sm text-gray-600">Foundation</span>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="w-2 h-2 rounded-full bg-blue-400"
+              />
+              <span className="text-sm text-white font-semibold">10 Lessons</span>
             </div>
+            <div className="w-px h-6 bg-white bg-opacity-20" />
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500" />
-              <span className="text-sm text-gray-600">Value-Based</span>
+              <motion.div
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-2 h-2 rounded-full bg-green-400"
+              />
+              <span className="text-sm text-white font-semibold">{completedSet.size} Complete</span>
             </div>
+            <div className="w-px h-6 bg-white bg-opacity-20" />
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500" />
-              <span className="text-sm text-gray-600">Policy Gradient</span>
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-6 flex-wrap mt-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm px-2 py-1 bg-orange-100 text-orange-700 rounded-full border border-orange-300">
-                📈 On-policy
+              <motion.div
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-2 h-2 rounded-full bg-purple-400"
+              />
+              <span className="text-sm text-white font-semibold">
+                {Math.round((completedSet.size / 10) * 100)}%
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full border border-cyan-300">
-                🔄 Off-policy
-              </span>
-            </div>
-          </div>
+          </motion.div>
         </motion.div>
 
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto mb-12 p-6 bg-white rounded-2xl shadow-lg"
-        >
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-3xl font-bold text-blue-600">8</div>
-              <div className="text-sm text-gray-600">Total Algorithms</div>
+        {/* Tree Visualization - Responsive */}
+        <div className="overflow-x-auto overflow-y-visible pb-12">
+          <div className="flex justify-center px-4" style={{ minWidth: 'fit-content', transformOrigin: 'center top' }}>
+            <div className="scale-75 sm:scale-90 md:scale-100 origin-top">
+              <TreeNodeCard
+                node={algorithmTree}
+                level={0}
+                isCompleted={false}
+                onSelect={handleSelectLesson}
+              />
             </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600">{completedSet.size}</div>
-              <div className="text-sm text-gray-600">Completed</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-purple-600">
-                {Math.round((completedSet.size / 8) * 100)}%
-              </div>
-              <div className="text-sm text-gray-600">Progress</div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Tree Visualization */}
-        <div className="overflow-x-auto pb-12">
-          <div className="min-w-max flex justify-center">
-            <TreeNodeCard
-              node={algorithmTree}
-              level={0}
-              isCompleted={false}
-              onSelect={handleSelectLesson}
-            />
           </div>
         </div>
 
-        {/* Timeline indicator */}
+        {/* Compact Info Card */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-2xl shadow-lg"
+          className="max-w-2xl mx-auto mt-12 p-6 bg-white bg-opacity-10 backdrop-blur-xl rounded-2xl border border-white border-opacity-20"
         >
-          <div className="flex items-center gap-3 mb-4">
-            <TrendingUp className="w-6 h-6 text-blue-600" />
-            <h3 className="text-lg font-semibold">Timeline View</h3>
-          </div>
-          <div className="space-y-2 text-sm text-gray-600">
-            <p>📊 <strong>Depth</strong> in the tree represents chronological progression</p>
-            <p>🌳 <strong>Branches</strong> show how algorithms evolved from foundational concepts</p>
-            <p>🎯 <strong>Click on lessons</strong> to start learning that algorithm</p>
-            <p>✨ <strong>Framework nodes</strong> can be expanded to explore their descendants</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-white">
+            {[
+              { icon: '📊', label: 'Depth = Timeline' },
+              { icon: '🌳', label: 'Branches = Evolution' },
+              { icon: '🎯', label: 'Click to Learn' },
+              { icon: '✨', label: 'Expand Nodes' },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.1 }}
+                className="flex flex-col items-center gap-2"
+              >
+                <span className="text-3xl">{item.icon}</span>
+                <span className="text-xs font-medium">{item.label}</span>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
       </div>

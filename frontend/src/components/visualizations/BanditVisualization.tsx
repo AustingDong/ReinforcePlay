@@ -24,10 +24,15 @@ export default function BanditVisualization({
   const [actionCounts, setActionCounts] = useState<number[]>(Array(nArms).fill(0))
   const [optimalRate, setOptimalRate] = useState(0)
   
-  // Initialize true rewards
+  // Initialize true rewards and reset everything when nArms changes
   useEffect(() => {
     const rewards = Array.from({ length: nArms }, () => Math.random() * 2 - 0.5)
     setTrueRewards(rewards)
+    setQValues(Array(nArms).fill(0))
+    setActionCounts(Array(nArms).fill(0))
+    setEpisode(0)
+    setRewardHistory([])
+    setOptimalRate(0)
   }, [nArms])
   
   // Simulation logic
@@ -36,6 +41,11 @@ export default function BanditVisualization({
       if (episode >= nEpisodes && isSimulating) {
         onComplete()
       }
+      return
+    }
+    
+    // Safety check: ensure arrays are properly initialized
+    if (trueRewards.length !== nArms || qValues.length !== nArms || actionCounts.length !== nArms) {
       return
     }
     
@@ -48,7 +58,10 @@ export default function BanditVisualization({
         action = qValues.indexOf(Math.max(...qValues))
       }
       
-      // Get reward (with noise)
+      // Get reward (with noise) - with safety check
+      if (action >= trueRewards.length) {
+        return
+      }
       const reward = trueRewards[action] + (Math.random() * 0.5 - 0.25)
       
       // Update Q-value (incremental mean)

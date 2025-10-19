@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, CheckCircle, List, Network } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, List, Network, Menu, X } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import BanditLesson from '@/components/lessons/BanditLesson'
-import MDPLesson from '@/components/lessons/MDPLesson'
-import QLearningLesson from '@/components/lessons/QLearningLesson'
-import SARSALesson from '@/components/lessons/SARSALesson'
-import TDLambdaLesson from '@/components/lessons/TDLambdaLesson'
-import REINFORCELesson from '@/components/lessons/REINFORCELesson'
-import A2CLesson from '@/components/lessons/A2CLesson'
-import PolicyGradientLesson from '@/components/lessons/PolicyGradientLesson'
+import IntroToRLLesson from '@/components/lessons/IntroToRLLesson'
+import BanditAdventure from '@/components/lessons/BanditAdventure'
+import MDPStory from '@/components/lessons/MDPStory'
+import QLearningLessonNew from '@/components/lessons/QLearningLessonNew'
+import SARSAStory from '@/components/lessons/SARSAStory'
+import TDLambdaStory from '@/components/lessons/TDLambdaStory'
+import REINFORCEStory from '@/components/lessons/REINFORCEStory'
+import A2CStory from '@/components/lessons/A2CStory'
+import PPOStory from '@/components/lessons/PPOStory'
 import AlgorithmTree from '@/components/AlgorithmTree'
 
 interface Chapter {
@@ -23,51 +24,57 @@ interface Chapter {
 const chapters: Chapter[] = [
   {
     id: 0,
-    title: 'Multi-Armed Bandit',
-    description: 'Learn the exploration vs. exploitation tradeoff',
-    component: BanditLesson,
+    title: 'Welcome to RL',
+    description: 'Your journey into intelligent agents begins here',
+    component: IntroToRLLesson,
   },
   {
     id: 1,
-    title: 'Markov Decision Process',
-    description: 'Understand states, actions, and rewards',
-    component: MDPLesson,
+    title: 'The Casino Heist 🎰',
+    description: 'Master the explore-exploit dilemma through a thrilling heist',
+    component: BanditAdventure,
   },
   {
     id: 2,
-    title: 'Q-Learning',
-    description: 'Master off-policy temporal difference learning',
-    component: QLearningLesson,
+    title: 'The Master Blueprint 🗺️',
+    description: 'Unlock the strategic framework behind all intelligent decisions',
+    component: MDPStory,
   },
   {
     id: 3,
-    title: 'SARSA',
-    description: 'Learn on-policy TD learning and compare with Q-Learning',
-    component: SARSALesson,
+    title: 'The Learning Robot 🤖',
+    description: 'Watch Q-Learning discover optimal paths through trial and error',
+    component: QLearningLessonNew,
   },
   {
     id: 4,
-    title: 'TD(λ) - Eligibility Traces',
-    description: 'Bridge between TD and Monte Carlo using eligibility traces',
-    component: TDLambdaLesson,
+    title: 'The Cautious Explorer 🛡️',
+    description: 'Discover why safety matters in reinforcement learning',
+    component: SARSAStory,
   },
   {
     id: 5,
-    title: 'REINFORCE (1992)',
-    description: 'Foundation of policy gradient methods',
-    component: REINFORCELesson,
+    title: 'Time Traveler\'s Advantage ⏰',
+    description: 'Master the art of crediting actions across time',
+    component: TDLambdaStory,
   },
   {
     id: 6,
-    title: 'A2C (2016)',
-    description: 'Actor-Critic methods reduce variance',
-    component: A2CLesson,
+    title: 'Evolution of Intelligence 🧬',
+    description: 'Witness AI evolve from random to genius with REINFORCE',
+    component: REINFORCEStory,
   },
   {
     id: 7,
-    title: 'PPO (2017)',
-    description: 'Modern policy optimization - state of the art',
-    component: PolicyGradientLesson,
+    title: 'The Dynamic Duo 🎭',
+    description: 'See how Actor and Critic team up for powerful learning',
+    component: A2CStory,
+  },
+  {
+    id: 8,
+    title: 'The Safety Revolution 🛡️',
+    description: 'Discover PPO - the algorithm powering ChatGPT and modern AI',
+    component: PPOStory,
   },
 ]
 
@@ -76,6 +83,7 @@ export default function LearningMode() {
   const navigate = useNavigate()
   const { currentChapter, setCurrentChapter, markChapterComplete, completedChapters } = useAppStore()
   const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree')
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true)
   
   const [activeChapter, setActiveChapter] = useState(
     chapterId ? parseInt(chapterId) : currentChapter
@@ -210,79 +218,121 @@ export default function LearningMode() {
   }
   
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 relative">
       {/* Chapter Navigation Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-        <div className="p-6">
-          {/* Back to Overview Button */}
-          <button
-            onClick={() => navigate('/learn')}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 mb-4 transition-colors"
+      <AnimatePresence>
+        {isSidebarVisible && (
+          <motion.div
+            initial={{ x: -320, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -320, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="w-80 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Overview
-          </button>
+            <div className="p-6">
+              {/* Back to Overview Button */}
+              <button
+                onClick={() => navigate('/learn')}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 mb-4 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back to Overview
+              </button>
 
-          <h2 className="text-xl font-bold mb-4">Learning Path</h2>
-          
-          <div className="space-y-2">
-            {chapters.map((chap) => {
-              const isActive = chap.id === activeChapter
-              // Ensure completedChapters is a Set (handle array from localStorage)
-              const completedSet = completedChapters instanceof Set 
-                ? completedChapters 
-                : new Set(completedChapters)
-              const isCompleted = completedSet.has(chap.id)
+              <h2 className="text-xl font-bold mb-4">Learning Path</h2>
               
-              return (
-                <motion.button
-                  key={chap.id}
-                  onClick={() => handleChapterSelect(chap.id)}
-                  whileHover={{ scale: 1.02 }}
-                  className={`w-full text-left p-4 rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-primary-50 border-2 border-primary-500'
-                      : 'bg-gray-50 border-2 border-transparent hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-gray-500">
-                          Chapter {chap.id + 1}
-                        </span>
-                        {isCompleted && (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        )}
+              <div className="space-y-2">
+                {chapters.map((chap) => {
+                  const isActive = chap.id === activeChapter
+                  // Ensure completedChapters is a Set (handle array from localStorage)
+                  const completedSet = completedChapters instanceof Set 
+                    ? completedChapters 
+                    : new Set(completedChapters)
+                  const isCompleted = completedSet.has(chap.id)
+                  
+                  return (
+                    <motion.button
+                      key={chap.id}
+                      onClick={() => handleChapterSelect(chap.id)}
+                      whileHover={{ scale: 1.02 }}
+                      className={`w-full text-left p-4 rounded-lg transition-all ${
+                        isActive
+                          ? 'bg-primary-50 border-2 border-primary-500'
+                          : 'bg-gray-50 border-2 border-transparent hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-500">
+                              Chapter {chap.id + 1}
+                            </span>
+                            {isCompleted && (
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            )}
+                          </div>
+                          <h3 className={`font-semibold mt-1 ${
+                            isActive ? 'text-primary-700' : 'text-gray-900'
+                          }`}>
+                            {chap.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {chap.description}
+                          </p>
+                        </div>
                       </div>
-                      <h3 className={`font-semibold mt-1 ${
-                        isActive ? 'text-primary-700' : 'text-gray-900'
-                      }`}>
-                        {chap.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {chap.description}
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Sidebar Toggle Button (when sidebar is hidden) */}
+      <AnimatePresence>
+        {!isSidebarVisible && (
+          <motion.button
+            initial={{ x: -60, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -60, opacity: 0 }}
+            transition={{ type: "spring", damping: 25 }}
+            onClick={() => setIsSidebarVisible(true)}
+            className="fixed left-4 top-4 z-50 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform"
+            title="Show sidebar"
+          >
+            <Menu className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-gray-500 mb-1">
-                Chapter {activeChapter + 1} of {chapters.length}
+            <div className="flex items-center gap-4">
+              {/* Sidebar Toggle Button */}
+              {isSidebarVisible && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsSidebarVisible(false)}
+                  className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                  title="Hide sidebar"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </motion.button>
+              )}
+              
+              <div>
+                <div className="text-sm text-gray-500 mb-1">
+                  Chapter {activeChapter + 1} of {chapters.length}
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900">{chapter.title}</h1>
+                <p className="text-gray-600 mt-1">{chapter.description}</p>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900">{chapter.title}</h1>
-              <p className="text-gray-600 mt-1">{chapter.description}</p>
             </div>
             
             {!completedChapters.has(activeChapter) && (

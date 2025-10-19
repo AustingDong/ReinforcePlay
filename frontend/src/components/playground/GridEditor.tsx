@@ -5,32 +5,41 @@ import clsx from 'clsx'
 
 type CellType = 'empty' | 'obstacle' | 'reward' | 'goal' | 'start'
 
-const CELL_COLORS = {
-  empty: 'bg-white hover:bg-gray-50',
-  obstacle: 'bg-gray-800',
-  reward: 'bg-yellow-200',
-  goal: 'bg-green-300',
-  start: 'bg-blue-300',
+// Fancy visual representations
+const CELL_STYLES = {
+  empty: 'bg-gradient-to-br from-gray-50 to-gray-100',
+  obstacle: 'bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900',
+  reward: 'bg-gradient-to-br from-yellow-200 via-amber-300 to-orange-400',
+  goal: 'bg-gradient-to-br from-green-300 via-emerald-400 to-teal-500',
+  start: 'bg-gradient-to-br from-blue-300 via-cyan-400 to-sky-500',
 }
 
-const CELL_LABELS = {
+const CELL_EMOJIS = {
   empty: '',
-  obstacle: '🚫',
-  reward: '💰',
-  goal: '🎯',
-  start: '🏁',
+  obstacle: '🧱',
+  reward: '💎',
+  goal: '🏆',
+  start: '🤖',
+}
+
+const CELL_SHADOWS = {
+  empty: '',
+  obstacle: 'shadow-inner',
+  reward: 'shadow-md shadow-yellow-400/30',
+  goal: 'shadow-md shadow-green-400/30',
+  start: 'shadow-md shadow-blue-400/30',
 }
 
 export default function GridEditor() {
   const { gridWidth, gridHeight, grid, updateGridCell } = useAppStore()
   const [selectedTool, setSelectedTool] = useState<CellType>('obstacle')
   
-  const tools: { type: CellType; label: string; color: string }[] = [
-    { type: 'start', label: 'Start', color: 'bg-blue-300' },
-    { type: 'goal', label: 'Goal', color: 'bg-green-300' },
-    { type: 'obstacle', label: 'Wall', color: 'bg-gray-800' },
-    { type: 'reward', label: 'Reward', color: 'bg-yellow-200' },
-    { type: 'empty', label: 'Empty', color: 'bg-white' },
+  const tools: { type: CellType; emoji: string; label: string; gradient: string }[] = [
+    { type: 'start', emoji: '🤖', label: 'Start', gradient: 'from-blue-400 to-cyan-500' },
+    { type: 'goal', emoji: '🏆', label: 'Goal', gradient: 'from-green-400 to-emerald-500' },
+    { type: 'obstacle', emoji: '🧱', label: 'Wall', gradient: 'from-gray-700 to-gray-900' },
+    { type: 'reward', emoji: '💎', label: 'Gem', gradient: 'from-yellow-400 to-orange-500' },
+    { type: 'empty', emoji: '🧹', label: 'Erase', gradient: 'from-gray-100 to-gray-200' },
   ]
   
   const getCellData = (x: number, y: number): GridCell | undefined => {
@@ -64,94 +73,124 @@ export default function GridEditor() {
   }
   
   return (
-    <div className="space-y-6">
-      {/* Tool Selector */}
-      <div className="flex gap-2 flex-wrap">
+    <div className="space-y-2">
+      {/* Tool Selector - Compact Cards */}
+      <div className="flex gap-1.5 flex-wrap">
         {tools.map(tool => (
-          <button
+          <motion.button
             key={tool.type}
             onClick={() => setSelectedTool(tool.type)}
+            whileHover={{ scale: 1.05, y: -1 }}
+            whileTap={{ scale: 0.95 }}
             className={clsx(
-              'px-4 py-2 rounded-lg border-2 transition-all',
+              'relative px-2 py-1.5 rounded-lg border transition-all overflow-hidden',
               selectedTool === tool.type
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-purple-500 shadow-md shadow-purple-300/50'
+                : 'border-gray-300 hover:border-purple-300'
             )}
           >
-            <div className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded ${tool.color} border border-gray-300`} />
-              <span className="font-medium">{tool.label}</span>
+            {/* Gradient background when selected */}
+            {selectedTool === tool.type && (
+              <motion.div
+                layoutId="selected-tool"
+                className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-10`}
+                transition={{ type: "spring", duration: 0.6 }}
+              />
+            )}
+            
+            <div className="relative flex items-center gap-1">
+              <span className="text-base">{tool.emoji}</span>
+              <span className="font-semibold text-[10px]">{tool.label}</span>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
       
-      {/* Grid */}
-      <div className="inline-block border-2 border-gray-300 rounded-lg overflow-hidden shadow-lg">
-        <div
-          className="grid gap-0"
-          style={{
-            gridTemplateColumns: `repeat(${gridWidth}, minmax(0, 1fr))`,
-          }}
-        >
-          {Array.from({ length: gridHeight }).map((_, y) =>
-            Array.from({ length: gridWidth }).map((_, x) => {
-              const cellData = getCellData(x, y)
-              const cellType = cellData?.type || 'empty'
-              
-              return (
-                <motion.button
-                  key={`${x}-${y}`}
-                  onClick={() => handleCellClick(x, y)}
-                  whileHover={{ scale: 0.95 }}
-                  whileTap={{ scale: 0.9 }}
-                  className={clsx(
-                    'w-20 h-20 border border-gray-200 flex items-center justify-center text-3xl transition-colors font-semibold',
-                    CELL_COLORS[cellType]
-                  )}
-                  title={`(${x}, ${y})`}
-                >
-                  {CELL_LABELS[cellType]}
-                </motion.button>
-              )
-            })
-          )}
-        </div>
-      </div>
-      
-      {/* Legend */}
-      <div className="card bg-gray-50">
-        <h4 className="font-semibold mb-3 text-sm">Grid Instructions</h4>
-        <ul className="text-sm text-gray-700 space-y-1">
-          <li>• Select a tool and click on grid cells to place it</li>
-          <li>• There can only be one Start and one Goal</li>
-          <li>• Obstacles block the agent's movement</li>
-          <li>• Rewards give positive feedback when reached</li>
-          <li>• Empty cells have a small negative reward (-0.1) to encourage efficiency</li>
-        </ul>
-      </div>
-      
-      {/* Cell Info */}
-      {grid.length > 0 && (
-        <div className="card">
-          <h4 className="font-semibold mb-2 text-sm">Placed Elements ({grid.length})</h4>
-          <div className="space-y-1 text-xs max-h-40 overflow-y-auto">
-            {grid
-              .filter(cell => cell.type !== 'empty')
-              .map((cell, idx) => (
-                <div key={idx} className="flex justify-between items-center py-1 border-b border-gray-100">
-                  <span>
-                    {CELL_LABELS[cell.type]} {cell.type} at ({cell.x}, {cell.y})
-                  </span>
-                  {cell.value !== 0 && (
-                    <span className="text-gray-600">R: {cell.value}</span>
-                  )}
-                </div>
-              ))}
+      {/* Grid - Fancy 3D Maze - Very Compact */}
+      <div className="relative w-full max-w-lg mx-auto">
+        {/* Subtle outer glow */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-xl opacity-10 blur-md" />
+        
+        <div className="relative border-2 border-gray-800 rounded-xl overflow-hidden shadow-xl bg-gradient-to-br from-gray-900 to-gray-800">
+          <div
+            className="grid gap-0.5 p-1"
+            style={{
+              gridTemplateColumns: `repeat(${gridWidth}, minmax(0, 1fr))`,
+              aspectRatio: `${gridWidth} / ${gridHeight}`,
+            }}
+          >
+            {Array.from({ length: gridHeight }).map((_, y) =>
+              Array.from({ length: gridWidth }).map((_, x) => {
+                const cellData = getCellData(x, y)
+                const cellType = cellData?.type || 'empty'
+                
+                return (
+                  <motion.button
+                    key={`${x}-${y}`}
+                    onClick={() => handleCellClick(x, y)}
+                    whileHover={{ scale: 1.08, zIndex: 10 }}
+                    whileTap={{ scale: 0.92 }}
+                    className={clsx(
+                      'relative aspect-square rounded border transition-all',
+                      CELL_STYLES[cellType],
+                      CELL_SHADOWS[cellType],
+                      cellType === 'empty' 
+                        ? 'border-gray-300 hover:border-purple-400' 
+                        : 'border-gray-600'
+                    )}
+                  >
+                    {/* Cell emoji - Compact sizing */}
+                    {CELL_EMOJIS[cellType] && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="text-sm sm:text-base drop-shadow-lg"
+                      >
+                        {CELL_EMOJIS[cellType]}
+                      </motion.span>
+                    )}
+                    
+                    {/* Subtle sparkle effect for rewards and goal */}
+                    {(cellType === 'reward' || cellType === 'goal') && (
+                      <motion.div
+                        animate={{
+                          opacity: [0.1, 0.2, 0.1],
+                          scale: [0.9, 1.05, 0.9],
+                        }}
+                        transition={{
+                          duration: 2.5,
+                          repeat: Infinity,
+                        }}
+                        className="absolute inset-0 rounded bg-white opacity-10 pointer-events-none"
+                      />
+                    )}
+                  </motion.button>
+                )
+              })
+            )}
           </div>
         </div>
-      )}
+      </div>
+      
+      {/* Legend - Compact */}
+      <div className="flex gap-2 text-[10px] text-gray-600 flex-wrap">
+        <div className="flex items-center gap-0.5">
+          <span className="text-sm">🤖</span>
+          <span>Start</span>
+        </div>
+        <div className="flex items-center gap-0.5">
+          <span className="text-sm">🏆</span>
+          <span>Goal</span>
+        </div>
+        <div className="flex items-center gap-0.5">
+          <span className="text-sm">🧱</span>
+          <span>Wall</span>
+        </div>
+        <div className="flex items-center gap-0.5">
+          <span className="text-sm">💎</span>
+          <span>Gem</span>
+        </div>
+      </div>
     </div>
   )
 }
-

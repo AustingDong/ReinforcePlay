@@ -133,8 +133,8 @@ export default function QLearningLesson() {
         
         <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
           <p className="font-semibold text-yellow-900">TODO: Add Interactive GridWorld</p>
-          <p className="text-yellow-800 text-sm mt-2">
-            The full interactive visualization will show:
+          <div className="text-yellow-800 text-sm mt-2">
+            <p>The full interactive visualization will show:</p>
             <ul className="list-disc list-inside mt-2 ml-2">
               <li>Agent moving through grid world</li>
               <li>Q-value heatmap for each cell</li>
@@ -142,8 +142,8 @@ export default function QLearningLesson() {
               <li>Reward curve over episodes</li>
               <li>Real-time Q-table updates</li>
             </ul>
-            For now, see the Playground for full interactive environment editing.
-          </p>
+            <p className="mt-2">For now, see the Playground for full interactive environment editing.</p>
+          </div>
         </div>
         
         <div className="flex gap-4">

@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Play, RotateCcw, Download, Upload, Settings, Grid3X3 } from 'lucide-react'
+import clsx from 'clsx'
 import { useAppStore } from '@/store/useAppStore'
 import { startSimulation, streamSimulation } from '@/services/api'
 import GridEditor from '@/components/playground/GridEditor'
+import BanditEnvironment from '@/components/playground/BanditEnvironment'
 import AlgorithmSelector from '@/components/playground/AlgorithmSelector'
 import ParameterPanel from '@/components/playground/ParameterPanel'
 import SimulationVisualization from '@/components/playground/SimulationVisualization'
-import EnvironmentSelector from '@/components/playground/EnvironmentSelector'
+import EnvironmentSelector, { environments } from '@/components/playground/EnvironmentSelector'
+import AlgorithmInfo from '@/components/playground/AlgorithmInfo'
+import InteractiveParameterGuide from '@/components/playground/InteractiveParameterGuide'
+import ParameterInput from '@/components/playground/ParameterInput'
 import { ToastContainer } from '@/components/Toast'
 import { useToast } from '@/hooks/useToast'
+import { parameterDescriptions } from '@/utils/parameterDescriptions'
 
 export default function Playground() {
   const { toasts, removeToast, success, error, warning } = useToast()
@@ -19,6 +25,7 @@ export default function Playground() {
     grid,
     setGridDimensions,
     clearGrid,
+    setGrid,
     simulationResults,
     setSimulationResults,
     addSimulationResult,
@@ -34,6 +41,10 @@ export default function Playground() {
   const [showEnvironmentSelector, setShowEnvironmentSelector] = useState(false)
   
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<AlgorithmType>('qlearning')
+  
+  // Get current environment details
+  const currentEnvironment = environments.find(env => env.id === selectedEnvironment)
+  const availableAlgorithms = currentEnvironment?.algorithms || []
   const [parameters, setParameters] = useState<Record<string, any>>({
     // Q-Learning & SARSA defaults
     alpha: 0.1,
@@ -54,6 +65,56 @@ export default function Playground() {
   })
   
   const [showSettings, setShowSettings] = useState(false)
+  const [gridPanelHeight, setGridPanelHeight] = useState(45) // Percentage
+  const [isDragging, setIsDragging] = useState(false)
+  
+  // Handle environment changes - switch to appropriate algorithm
+  useEffect(() => {
+    if (currentEnvironment && !availableAlgorithms.includes(selectedAlgorithm)) {
+      // Switch to the first available algorithm for this environment
+      const defaultAlgorithm = availableAlgorithms[0] as AlgorithmType
+      if (defaultAlgorithm) {
+        setSelectedAlgorithm(defaultAlgorithm)
+      }
+    }
+  }, [selectedEnvironment, currentEnvironment, availableAlgorithms, selectedAlgorithm])
+  
+  // Load preset from learning mode
+  useEffect(() => {
+    const presetStr = localStorage.getItem('playground_preset')
+    if (presetStr) {
+      try {
+        const preset = JSON.parse(presetStr)
+        
+        // Apply preset configuration
+        if (preset.algorithm) {
+          setSelectedAlgorithm(preset.algorithm)
+        }
+        if (preset.environment) {
+          setSelectedEnvironment(preset.environment)
+        }
+        if (preset.parameters) {
+          setParameters(prev => ({ ...prev, ...preset.parameters }))
+        }
+        if (preset.gridConfig && Array.isArray(preset.gridConfig)) {
+          setGrid(preset.gridConfig)
+        }
+        
+        // Clear preset after loading
+        localStorage.removeItem('playground_preset')
+        
+        success('Preset Loaded', 'Configuration loaded from lesson')
+      } catch (err) {
+        console.error('Failed to load preset:', err)
+      }
+    }
+  }, []) // Only run once on mount
+  
+  // Helper to handle environment selection
+  const handleEnvironmentChange = (envId: string) => {
+    setSelectedEnvironment(envId)
+    clearSimulationResults()
+  }
   
   const handleRunSimulation = async () => {
     if (isSimulating) return
@@ -213,11 +274,48 @@ export default function Playground() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `rl-config-${Date.now()}.json`
+    const filename = `rl-config-${selectedAlgorithm}-${Date.now()}.json`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
+    
+    success('Configuration Exported', `Saved as ${filename}`)
   }
   
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    e.preventDefault()
+  }
+
+  // Add/remove event listeners for drag
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = document.getElementById('playground-content')
+      if (!container) return
+      
+      const rect = container.getBoundingClientRect()
+      const newHeight = ((e.clientY - rect.top) / rect.height) * 100
+      
+      // Constrain between 20% and 80%
+      const clampedHeight = Math.min(Math.max(newHeight, 20), 80)
+      setGridPanelHeight(clampedHeight)
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+    
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging])
+
   const handleImportConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -226,564 +324,426 @@ export default function Playground() {
     reader.onload = (e) => {
       try {
         const config = JSON.parse(e.target?.result as string)
+        
+        // Validate config structure
+        if (!config.algorithm || !config.parameters || !config.grid) {
+          throw new Error('Invalid configuration file format')
+        }
+        
+        // Apply the configuration
         setSelectedAlgorithm(config.algorithm)
         setParameters(config.parameters)
         setGridDimensions(config.grid.width, config.grid.height)
-        // TODO: Set grid cells
-      } catch (error) {
-        console.error('Failed to import config:', error)
+        
+        // Import grid cells
+        if (config.grid.cells && Array.isArray(config.grid.cells)) {
+          setGrid(config.grid.cells)
+        }
+        
+        success('Configuration Imported', `Loaded ${config.algorithm} settings successfully`)
+      } catch (err: any) {
+        console.error('Failed to import config:', err)
+        error('Import Failed', err.message || 'Invalid configuration file')
       }
     }
     reader.readAsText(file)
+    
+    // Reset the input value so the same file can be imported again
+    event.target.value = ''
   }
   
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Playground</h1>
-            <div className="flex items-center gap-3 mt-1">
-              <p className="text-gray-600">
-                Build custom environments and experiment with RL algorithms
-              </p>
-              <button
-                onClick={() => setShowEnvironmentSelector(true)}
-                className="flex items-center gap-2 px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold transition-colors"
-              >
-                <Grid3X3 className="w-4 h-4" />
-                <span>Environment: Classic GridWorld</span>
-              </button>
-            </div>
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+      {/* Header - Smaller & Cleaner */}
+      <div className="flex-shrink-0 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 border-b border-gray-200 px-3 py-2 shadow-md">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-lg font-bold text-white drop-shadow-lg whitespace-nowrap">
+              🎮 Playground
+            </h1>
+            <button
+              onClick={() => setShowEnvironmentSelector(true)}
+              className="flex items-center gap-1.5 px-2 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white rounded-md text-xs font-semibold transition-all border border-white border-opacity-30 whitespace-nowrap"
+            >
+              <span className="text-sm">{currentEnvironment?.icon || '🎯'}</span>
+              <span className="hidden md:inline text-xs">{currentEnvironment?.name || 'Select'}</span>
+            </button>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex gap-1.5 flex-shrink-0">
             <button
               onClick={handleReset}
-              className="btn btn-secondary flex items-center gap-2"
+              className="px-2 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white rounded-md text-xs font-semibold transition-all border border-white border-opacity-30 flex items-center gap-1.5"
               disabled={!isSimulating && simulationResults.length === 0}
             >
-              <RotateCcw className="w-5 h-5" />
-              Reset
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Reset</span>
             </button>
             
             <button
               onClick={handleRunSimulation}
               disabled={isSimulating}
-              className="btn btn-primary flex items-center gap-2"
+              className="px-3 py-1 bg-white text-purple-600 hover:bg-opacity-90 rounded-md text-xs font-bold transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
             >
-              <Play className="w-5 h-5" />
-              {isSimulating ? 'Running...' : 'Run Simulation'}
-            </button>
-            
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="btn btn-secondary"
-            >
-              <Settings className="w-5 h-5" />
+              <Play className="w-3.5 h-3.5" />
+              {isSimulating ? 'Running...' : 'Run'}
             </button>
           </div>
         </div>
       </div>
       
-      {/* Main Content - Vertical Layout */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Panel - Compact Configuration */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-start gap-6">
-            {/* Algorithm Selection - Compact Horizontal */}
-            <div className="flex-shrink-0" style={{ width: '280px' }}>
-              <h3 className="text-sm font-semibold mb-2 text-gray-700">Algorithm</h3>
+      {/* Main Content Area - Flexbox Layout */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Configuration Panel - Very Compact */}
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-3 py-2 overflow-x-auto">
+          <div className="flex flex-col lg:flex-row items-start gap-2 min-w-fit">
+            {/* Algorithm Selection */}
+            <div className="flex-shrink-0 w-full lg:w-44">
+              <label className="text-[10px] font-semibold mb-0.5 text-gray-600 flex items-center gap-1">
+                ⚙️ Algorithm
+              </label>
               <select
                 value={selectedAlgorithm}
                 onChange={(e) => setSelectedAlgorithm(e.target.value as any)}
-                className="input w-full text-sm"
+                className="input w-full text-xs font-semibold py-1 px-2"
               >
-                <optgroup label="Bandit">
-                  <option value="bandit">Multi-Armed Bandit</option>
-                </optgroup>
-                <optgroup label="Value-Based">
-                  <option value="qlearning">Q-Learning (Off-policy)</option>
-                  <option value="sarsa">SARSA (On-policy)</option>
-                  <option value="td_lambda">TD(λ) - Eligibility Traces</option>
-                </optgroup>
-                <optgroup label="Policy Gradient (Timeline)">
-                  <option value="reinforce">REINFORCE (1992)</option>
-                  <option value="trpo">TRPO (2015) - Trust Region</option>
-                  <option value="a2c">A2C (2016)</option>
-                  <option value="ppo">PPO (2017) - Improved TRPO</option>
-                </optgroup>
+                {availableAlgorithms.includes('bandit') && (
+                  <optgroup label="🎰 Bandit">
+                    <option value="bandit">Multi-Armed Bandit</option>
+                  </optgroup>
+                )}
+                {(availableAlgorithms.includes('qlearning') || availableAlgorithms.includes('sarsa') || availableAlgorithms.includes('td_lambda')) && (
+                  <optgroup label="📊 Value-Based">
+                    {availableAlgorithms.includes('qlearning') && (
+                      <option value="qlearning">Q-Learning (Off-policy)</option>
+                    )}
+                    {availableAlgorithms.includes('sarsa') && (
+                      <option value="sarsa">SARSA (On-policy)</option>
+                    )}
+                    {availableAlgorithms.includes('td_lambda') && (
+                      <option value="td_lambda">TD(λ) - Eligibility Traces</option>
+                    )}
+                  </optgroup>
+                )}
+                {(availableAlgorithms.includes('reinforce') || availableAlgorithms.includes('trpo') || availableAlgorithms.includes('a2c') || availableAlgorithms.includes('ppo')) && (
+                  <optgroup label="🚀 Policy Gradient (Timeline)">
+                    {availableAlgorithms.includes('reinforce') && (
+                      <option value="reinforce">REINFORCE (1992)</option>
+                    )}
+                    {availableAlgorithms.includes('trpo') && (
+                      <option value="trpo">TRPO (2015) - Trust Region</option>
+                    )}
+                    {availableAlgorithms.includes('a2c') && (
+                      <option value="a2c">A2C (2016)</option>
+                    )}
+                    {availableAlgorithms.includes('ppo') && (
+                      <option value="ppo">PPO (2017) - Improved TRPO</option>
+                    )}
+                  </optgroup>
+                )}
               </select>
             </div>
             
-            {/* Parameters - Compact Grid */}
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold mb-2 text-gray-700">Parameters</h3>
-              <div className="grid grid-cols-4 gap-3">
+            {/* Parameters - Very Compact */}
+            <div className="flex-1 min-w-0">
+              <label className="text-[10px] font-semibold mb-0.5 text-gray-600 flex items-center gap-1">
+                🎛️ Parameters
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
                 {selectedAlgorithm === 'bandit' && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Arms</label>
-                      <input
-                        type="number"
-                        min={2}
-                        max={10}
-                        value={parameters.n_arms}
-                        onChange={(e) => setParameters({ ...parameters, n_arms: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Epsilon (ε)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.epsilon}
-                        onChange={(e) => setParameters({ ...parameters, epsilon: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={100}
-                        max={2000}
-                        step={100}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Initial Q</label>
-                      <input
-                        type="number"
-                        min={-2}
-                        max={2}
-                        step={0.1}
-                        value={parameters.initial_q}
-                        onChange={(e) => setParameters({ ...parameters, initial_q: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.n_arms}
+                      value={parameters.n_arms}
+                      onChange={(v) => setParameters({ ...parameters, n_arms: Math.round(v) })}
+                      min={2}
+                      max={10}
+                      step={1}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.epsilon}
+                      value={parameters.epsilon}
+                      onChange={(v) => setParameters({ ...parameters, epsilon: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={100}
+                      max={2000}
+                      step={100}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.initial_q}
+                      value={parameters.initial_q}
+                      onChange={(v) => setParameters({ ...parameters, initial_q: v })}
+                      min={-2}
+                      max={2}
+                      step={0.1}
+                    />
                   </>
                 )}
                 
-                {selectedAlgorithm === 'qlearning' && (
+                {(selectedAlgorithm === 'qlearning' || selectedAlgorithm === 'sarsa') && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Alpha (α)</label>
-                      <input
-                        type="number"
-                        min={0.01}
-                        max={1}
-                        step={0.05}
-                        value={parameters.alpha}
-                        onChange={(e) => setParameters({ ...parameters, alpha: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Epsilon (ε)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.epsilon}
-                        onChange={(e) => setParameters({ ...parameters, epsilon: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                  </>
-                )}
-                
-                {selectedAlgorithm === 'sarsa' && (
-                  <>
-                    <div>
-                      <label className="text-xs text-gray-600">Alpha (α)</label>
-                      <input
-                        type="number"
-                        min={0.01}
-                        max={1}
-                        step={0.05}
-                        value={parameters.alpha}
-                        onChange={(e) => setParameters({ ...parameters, alpha: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Epsilon (ε)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.epsilon}
-                        onChange={(e) => setParameters({ ...parameters, epsilon: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.alpha}
+                      value={parameters.alpha}
+                      onChange={(v) => setParameters({ ...parameters, alpha: v })}
+                      min={0.01}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.gamma}
+                      value={parameters.gamma}
+                      onChange={(v) => setParameters({ ...parameters, gamma: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.epsilon}
+                      value={parameters.epsilon}
+                      onChange={(v) => setParameters({ ...parameters, epsilon: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={50}
+                      max={1000}
+                      step={50}
+                    />
                   </>
                 )}
 
                 {selectedAlgorithm === 'td_lambda' && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Alpha (α)</label>
-                      <input
-                        type="number"
-                        min={0.01}
-                        max={1}
-                        step={0.05}
-                        value={parameters.alpha}
-                        onChange={(e) => setParameters({ ...parameters, alpha: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Lambda (λ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.1}
-                        value={parameters.lambda_}
-                        onChange={(e) => setParameters({ ...parameters, lambda_: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">0=TD(0), 1=MC</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Epsilon (ε)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.epsilon}
-                        onChange={(e) => setParameters({ ...parameters, epsilon: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.alpha}
+                      value={parameters.alpha}
+                      onChange={(v) => setParameters({ ...parameters, alpha: v })}
+                      min={0.01}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.gamma}
+                      value={parameters.gamma}
+                      onChange={(v) => setParameters({ ...parameters, gamma: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.lambda_}
+                      value={parameters.lambda_}
+                      onChange={(v) => setParameters({ ...parameters, lambda_: v })}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.epsilon}
+                      value={parameters.epsilon}
+                      onChange={(v) => setParameters({ ...parameters, epsilon: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={50}
+                      max={1000}
+                      step={50}
+                    />
                   </>
                 )}
                 
                 {selectedAlgorithm === 'reinforce' && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Learning Rate</label>
-                      <input
-                        type="number"
-                        min={0.0001}
-                        max={0.01}
-                        step={0.0001}
-                        value={parameters.learning_rate}
-                        onChange={(e) => setParameters({ ...parameters, learning_rate: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.learning_rate}
+                      value={parameters.learning_rate}
+                      onChange={(v) => setParameters({ ...parameters, learning_rate: v })}
+                      min={0.0001}
+                      max={0.01}
+                      step={0.0001}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.gamma}
+                      value={parameters.gamma}
+                      onChange={(v) => setParameters({ ...parameters, gamma: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={50}
+                      max={1000}
+                      step={50}
+                    />
                   </>
                 )}
                 
                 {selectedAlgorithm === 'a2c' && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Learning Rate</label>
-                      <input
-                        type="number"
-                        min={0.0001}
-                        max={0.01}
-                        step={0.0001}
-                        value={parameters.learning_rate}
-                        onChange={(e) => setParameters({ ...parameters, learning_rate: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Entropy Coef</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={0.1}
-                        step={0.01}
-                        value={parameters.entropy_coef}
-                        onChange={(e) => setParameters({ ...parameters, entropy_coef: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Value Coef</label>
-                      <input
-                        type="number"
-                        min={0.1}
-                        max={1}
-                        step={0.1}
-                        value={parameters.value_coef}
-                        onChange={(e) => setParameters({ ...parameters, value_coef: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.learning_rate}
+                      value={parameters.learning_rate}
+                      onChange={(v) => setParameters({ ...parameters, learning_rate: v })}
+                      min={0.0001}
+                      max={0.01}
+                      step={0.0001}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.gamma}
+                      value={parameters.gamma}
+                      onChange={(v) => setParameters({ ...parameters, gamma: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.entropy_coef}
+                      value={parameters.entropy_coef}
+                      onChange={(v) => setParameters({ ...parameters, entropy_coef: v })}
+                      min={0}
+                      max={0.1}
+                      step={0.01}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.value_coef}
+                      value={parameters.value_coef}
+                      onChange={(v) => setParameters({ ...parameters, value_coef: v })}
+                      min={0.1}
+                      max={1}
+                      step={0.1}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={50}
+                      max={1000}
+                      step={50}
+                    />
                   </>
                 )}
                 
                 {selectedAlgorithm === 'trpo' && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Learning Rate</label>
-                      <input
-                        type="number"
-                        min={0.0001}
-                        max={0.01}
-                        step={0.0001}
-                        value={parameters.learning_rate}
-                        onChange={(e) => setParameters({ ...parameters, learning_rate: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Max KL</label>
-                      <input
-                        type="number"
-                        min={0.001}
-                        max={0.1}
-                        step={0.001}
-                        value={parameters.max_kl}
-                        onChange={(e) => setParameters({ ...parameters, max_kl: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.learning_rate}
+                      value={parameters.learning_rate}
+                      onChange={(v) => setParameters({ ...parameters, learning_rate: v })}
+                      min={0.0001}
+                      max={0.01}
+                      step={0.0001}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.gamma}
+                      value={parameters.gamma}
+                      onChange={(v) => setParameters({ ...parameters, gamma: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.max_kl}
+                      value={parameters.max_kl}
+                      onChange={(v) => setParameters({ ...parameters, max_kl: v })}
+                      min={0.001}
+                      max={0.1}
+                      step={0.001}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={50}
+                      max={1000}
+                      step={50}
+                    />
                   </>
                 )}
                 
                 {selectedAlgorithm === 'ppo' && (
                   <>
-                    <div>
-                      <label className="text-xs text-gray-600">Learning Rate</label>
-                      <input
-                        type="number"
-                        min={0.0001}
-                        max={0.01}
-                        step={0.0001}
-                        value={parameters.learning_rate}
-                        onChange={(e) => setParameters({ ...parameters, learning_rate: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Gamma (γ)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={parameters.gamma}
-                        onChange={(e) => setParameters({ ...parameters, gamma: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Clip Ratio</label>
-                      <input
-                        type="number"
-                        min={0.1}
-                        max={0.5}
-                        step={0.05}
-                        value={parameters.clip_ratio}
-                        onChange={(e) => setParameters({ ...parameters, clip_ratio: parseFloat(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Episodes</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={1000}
-                        step={50}
-                        value={parameters.n_episodes}
-                        onChange={(e) => setParameters({ ...parameters, n_episodes: parseInt(e.target.value) })}
-                        className="input w-full text-sm mt-1"
-                      />
-                    </div>
+                    <ParameterInput
+                      {...parameterDescriptions.learning_rate}
+                      value={parameters.learning_rate}
+                      onChange={(v) => setParameters({ ...parameters, learning_rate: v })}
+                      min={0.0001}
+                      max={0.01}
+                      step={0.0001}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.gamma}
+                      value={parameters.gamma}
+                      onChange={(v) => setParameters({ ...parameters, gamma: v })}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.clip_ratio}
+                      value={parameters.clip_ratio}
+                      onChange={(v) => setParameters({ ...parameters, clip_ratio: v })}
+                      min={0.1}
+                      max={0.5}
+                      step={0.05}
+                    />
+                    <ParameterInput
+                      {...parameterDescriptions.n_episodes}
+                      value={parameters.n_episodes}
+                      onChange={(v) => setParameters({ ...parameters, n_episodes: Math.round(v) })}
+                      min={50}
+                      max={1000}
+                      step={50}
+                    />
                   </>
                 )}
               </div>
             </div>
             
-            {/* Grid Size - Compact (for grid-based) */}
+            {/* Grid Size (for grid-based) */}
             {(selectedAlgorithm === 'qlearning' || selectedAlgorithm === 'sarsa' || selectedAlgorithm === 'td_lambda' || selectedAlgorithm === 'reinforce' || selectedAlgorithm === 'a2c' || selectedAlgorithm === 'trpo' || selectedAlgorithm === 'ppo') && (
-              <div className="flex-shrink-0" style={{ width: '200px' }}>
-                <h3 className="text-sm font-semibold mb-2 text-gray-700">Grid Size</h3>
-                <div className="flex gap-2">
+              <div className="flex-shrink-0" style={{ width: '120px' }}>
+                <label className="text-[10px] font-semibold mb-0.5 text-gray-600">Grid Size</label>
+                <div className="flex gap-1.5">
                   <div className="flex-1">
-                    <label className="text-xs text-gray-600">W</label>
+                    <label className="text-[9px] text-gray-500">W</label>
                     <input
                       type="number"
                       min={3}
                       max={15}
                       value={gridWidth}
                       onChange={(e) => setGridDimensions(parseInt(e.target.value), gridHeight)}
-                      className="input w-full text-sm mt-1"
+                      className="input w-full text-xs py-0.5 px-1.5 mt-0.5"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="text-xs text-gray-600">H</label>
+                    <label className="text-[9px] text-gray-500">H</label>
                     <input
                       type="number"
                       min={3}
                       max={15}
                       value={gridHeight}
                       onChange={(e) => setGridDimensions(gridWidth, parseInt(e.target.value))}
-                      className="input w-full text-sm mt-1"
+                      className="input w-full text-xs py-0.5 px-1.5 mt-0.5"
                     />
                   </div>
                 </div>
@@ -791,22 +751,25 @@ export default function Playground() {
             )}
             
             {/* Actions */}
-            <div className="flex-shrink-0 flex items-end gap-2">
-              <button
-                onClick={clearGrid}
-                className="btn btn-secondary text-xs px-3 py-2"
-                title="Clear Grid"
-              >
-                🔄 Clear
-              </button>
+            <div className="flex-shrink-0 flex items-end gap-1.5">
+              {/* Clear button only for grid-based algorithms */}
+              {(selectedAlgorithm === 'qlearning' || selectedAlgorithm === 'sarsa' || selectedAlgorithm === 'td_lambda' || selectedAlgorithm === 'reinforce' || selectedAlgorithm === 'a2c' || selectedAlgorithm === 'trpo' || selectedAlgorithm === 'ppo') && (
+                <button
+                  onClick={clearGrid}
+                  className="btn btn-secondary text-[10px] px-2 py-1"
+                  title="Clear Grid"
+                >
+                  🔄
+                </button>
+              )}
               <button
                 onClick={handleExportConfig}
-                className="btn btn-secondary text-xs px-3 py-2"
+                className="btn btn-secondary text-[10px] px-2 py-1"
                 title="Export Config"
               >
                 <Download className="w-3 h-3" />
               </button>
-              <label className="btn btn-secondary text-xs px-3 py-2 cursor-pointer" title="Import Config">
+              <label className="btn btn-secondary text-[10px] px-2 py-1 cursor-pointer" title="Import Config">
                 <Upload className="w-3 h-3" />
                 <input
                   type="file"
@@ -819,52 +782,115 @@ export default function Playground() {
           </div>
         </div>
         
-        {/* Bottom Section - Split View */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left: Environment Editor */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-            {(selectedAlgorithm !== 'bandit') ? (
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="flex flex-col items-center justify-center min-h-full">
-                  <div className="mb-4 text-center">
-                    <h3 className="text-xl font-semibold mb-2">Environment Editor</h3>
-                    <p className="text-gray-600 text-sm">
-                      Click cells to add obstacles, rewards, start and goal positions
-                    </p>
-                  </div>
-                  
+        {/* Main Content Area - VERTICAL Layout */}
+        <div id="playground-content" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {selectedAlgorithm === 'bandit' ? (
+            /* Bandit: Full height with proper scroll */
+            <div className="flex-1 bg-gradient-to-br from-gray-50 to-white overflow-y-auto">
+              <div className="max-w-6xl mx-auto py-6 px-6">
+                <BanditEnvironment
+                  nArms={parameters.n_arms}
+                  simulationResults={simulationResults}
+                  isRunning={isSimulating}
+                />
+              </div>
+            </div>
+          ) : (
+            /* Grid-based: Resizable Split View */
+            <>
+              {/* Top: Environment Editor - Resizable */}
+              <motion.div
+                className="flex-shrink-0 bg-gradient-to-br from-gray-50 to-white border-b border-gray-200 overflow-y-auto"
+                style={{ height: `${gridPanelHeight}%` }}
+                animate={{ height: `${gridPanelHeight}%` }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <div className="max-w-4xl mx-auto py-3 px-4">
                   <GridEditor />
                 </div>
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto p-8">
-                <div className="max-w-4xl mx-auto">
-                  <div className="card">
-                    <h3 className="text-xl font-semibold mb-3">Bandit Configuration</h3>
-                    <p className="text-gray-600 mb-4">
-                      The multi-armed bandit problem doesn't require a grid environment. 
-                      Configure the number of arms and parameters above, then run the simulation.
-                    </p>
-                    
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-                      <p className="text-sm text-blue-900">
-                        <strong>Tip:</strong> Try different epsilon values to see the exploration-exploitation tradeoff in action!
-                      </p>
-                    </div>
-                  </div>
+              </motion.div>
+              
+              {/* Fancy Resizable Divider */}
+              <motion.div
+                className={clsx(
+                  'relative flex-shrink-0 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 cursor-ns-resize group',
+                  isDragging && 'h-3'
+                )}
+                onMouseDown={handleMouseDown}
+                whileHover={{ scale: 1.05, height: 12 }}
+                animate={isDragging ? { scale: 1.1 } : {}}
+              >
+                {/* Glow effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 blur-sm opacity-0 group-hover:opacity-50 transition-opacity"
+                  animate={isDragging ? { opacity: 0.7 } : {}}
+                />
+                
+                {/* Handle indicator */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <motion.div
+                    className="flex gap-1"
+                    animate={isDragging ? { scale: 1.2 } : {}}
+                  >
+                    <div className="w-8 h-1 bg-white rounded-full opacity-70 group-hover:opacity-100" />
+                    <div className="w-8 h-1 bg-white rounded-full opacity-70 group-hover:opacity-100" />
+                  </motion.div>
+                </div>
+                
+                {/* Animated particles when dragging */}
+                <AnimatePresence>
+                  {isDragging && (
+                    <>
+                      {[...Array(5)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ x: `${i * 20}%`, opacity: 0, scale: 0 }}
+                          animate={{ 
+                            x: `${i * 20 + 10}%`,
+                            opacity: [0, 1, 0],
+                            scale: [0, 1, 0],
+                          }}
+                          exit={{ opacity: 0 }}
+                          transition={{ 
+                            duration: 1,
+                            repeat: Infinity,
+                            delay: i * 0.1,
+                          }}
+                          className="absolute top-1/2 w-2 h-2 bg-white rounded-full"
+                        />
+                      ))}
+                    </>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+              
+              {/* Bottom: Simulation Results - Flexible */}
+              <div className="flex-1 flex flex-col min-h-0 bg-white overflow-hidden">
+                <div className="flex-shrink-0 bg-gradient-to-r from-indigo-500 to-purple-500 px-3 py-1.5 shadow-sm">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    📊 Results
+                    {isSimulating && (
+                      <span className="text-[10px] text-indigo-100 font-normal flex items-center gap-1">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-1.5 h-1.5 border border-white border-t-transparent rounded-full"
+                        />
+                        Ep {simulationResults.length}
+                      </span>
+                    )}
+                  </h3>
+                </div>
+                <div className="flex-1 overflow-y-auto bg-white">
+                  <SimulationVisualization
+                    algorithm={selectedAlgorithm}
+                    results={simulationResults}
+                    isRunning={isSimulating}
+                  />
                 </div>
               </div>
-            )}
-          </div>
-          
-          {/* Right: Simulation Results */}
-          <div className="w-[600px] bg-white border-l border-gray-200 overflow-y-auto">
-            <SimulationVisualization
-              algorithm={selectedAlgorithm}
-              results={simulationResults}
-              isRunning={isSimulating}
-            />
-          </div>
+            </>
+          )}
         </div>
       </div>
       
@@ -873,7 +899,7 @@ export default function Playground() {
         {showEnvironmentSelector && (
           <EnvironmentSelector
             selectedEnvironment={selectedEnvironment}
-            onSelectEnvironment={setSelectedEnvironment}
+            onSelectEnvironment={handleEnvironmentChange}
             onClose={() => setShowEnvironmentSelector(false)}
           />
         )}
@@ -881,6 +907,9 @@ export default function Playground() {
       
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
+      
+      {/* Floating Parameter Guide */}
+      <InteractiveParameterGuide algorithm={selectedAlgorithm} />
     </div>
   )
 }
