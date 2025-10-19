@@ -11,6 +11,17 @@ ReinforcePlay is a full-stack educational platform that makes RL concepts access
 
 ---
 
+## 🚀 Quick Deploy
+
+Deploy to public server in one command:
+```bash
+./deploy.sh
+```
+
+See [QUICK_DEPLOY.md](./QUICK_DEPLOY.md) for instant deployment or [DEPLOYMENT.md](./DEPLOYMENT.md) for production setup.
+
+---
+
 ## ✨ Features
 
 ### 📚 Learning Mode

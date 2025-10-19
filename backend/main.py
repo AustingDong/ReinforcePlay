@@ -4,6 +4,7 @@ FastAPI Backend for ReinforcePlay - Interactive RL Learning Platform
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import simulate, progress
+from config import settings
 
 app = FastAPI(
     title="ReinforcePlay API",
@@ -14,7 +15,7 @@ app = FastAPI(
 # CORS middleware for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite default port
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,5 +57,10 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app", 
+        host=settings.HOST, 
+        port=settings.PORT, 
+        reload=settings.DEBUG
+    )
 
