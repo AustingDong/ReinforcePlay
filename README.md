@@ -13,12 +13,23 @@ ReinforcePlay is a full-stack educational platform that makes RL concepts access
 
 ## 🚀 Quick Deploy
 
-Deploy to public server in one command:
+### Simple Deployment (No Docker)
+```bash
+# One-time setup
+./deploy-simple.sh
+
+# Run on public IP
+./run-public.sh
+```
+
+Your app is now live on `http://YOUR_SERVER_IP`! See [SIMPLE_DEPLOY.md](./SIMPLE_DEPLOY.md) for details.
+
+### Docker Deployment (Optional)
 ```bash
 ./deploy.sh
 ```
 
-See [QUICK_DEPLOY.md](./QUICK_DEPLOY.md) for instant deployment or [DEPLOYMENT.md](./DEPLOYMENT.md) for production setup.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for Docker and advanced production setup.
 
 ---
 
