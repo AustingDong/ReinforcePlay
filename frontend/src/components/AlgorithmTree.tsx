@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Circle, BookOpen, Calendar, Zap, TrendingUp } from 'lucide-react'
+import { CheckCircle, Circle, BookOpen, Sparkles, Trophy } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 
 interface TreeNode {
@@ -12,6 +12,7 @@ interface TreeNode {
   type: 'on-policy' | 'off-policy' | 'exploration' | 'framework'
   description: string
   features: string[]
+  icon: string
   children?: TreeNode[]
 }
 
@@ -23,33 +24,37 @@ const algorithmTree: TreeNode = {
   type: 'framework',
   description: 'Learning through interaction with environment',
   features: ['Agent', 'Environment', 'Reward', 'Policy'],
+  icon: '🧠',
   children: [
     {
-      id: 8,
+      id: 0,
       name: 'Introduction to RL',
       year: '1950s',
       category: 'foundation',
       type: 'framework',
       description: 'Start your RL journey here!',
       features: ['Basics', 'Concepts', 'Overview'],
+      icon: '📚',
     },
     {
-      id: 0,
+      id: 1,
       name: 'Multi-Armed Bandit',
       year: '1952',
       category: 'foundation',
       type: 'exploration',
       description: 'Exploration vs Exploitation tradeoff',
       features: ['ε-greedy', 'Action value', 'No state'],
+      icon: '🎰',
     },
     {
-      id: 1,
+      id: 2,
       name: 'Markov Decision Process',
       year: '1950s',
       category: 'foundation',
       type: 'framework',
       description: 'Mathematical framework for sequential decisions',
       features: ['States', 'Actions', 'Transitions', 'Rewards'],
+      icon: '🗺️',
       children: [
         {
           id: -2,
@@ -59,33 +64,37 @@ const algorithmTree: TreeNode = {
           type: 'framework',
           description: 'Learn value of states/actions',
           features: ['Q-function', 'Value function', 'Bootstrapping'],
+          icon: '📊',
           children: [
             {
-              id: 2,
+              id: 3,
               name: 'Q-Learning',
               year: '1989',
               category: 'value-based',
               type: 'off-policy',
               description: 'Off-policy TD control',
               features: ['Q-table', 'Max operator', 'Model-free'],
+              icon: '🎯',
             },
             {
               id: 4,
-              name: 'TD(λ)',
-              year: '1988',
-              category: 'value-based',
-              type: 'on-policy',
-              description: 'Eligibility traces bridge TD and MC',
-              features: ['Traces', 'λ decay', 'Credit assignment'],
-            },
-            {
-              id: 3,
               name: 'SARSA',
               year: '1994',
               category: 'value-based',
               type: 'on-policy',
               description: 'On-policy TD control',
               features: ['On-policy', 'Safe learning', 'TD update'],
+              icon: '🛡️',
+            },
+            {
+              id: 5,
+              name: 'TD(λ)',
+              year: '1988',
+              category: 'value-based',
+              type: 'on-policy',
+              description: 'Eligibility traces bridge TD and MC',
+              features: ['Traces', 'λ decay', 'Credit assignment'],
+              icon: '⏰',
             },
           ],
         },
@@ -97,15 +106,17 @@ const algorithmTree: TreeNode = {
           type: 'framework',
           description: 'Directly optimize policy',
           features: ['Policy parameters', 'Gradient ascent', 'Continuous actions'],
+          icon: '🚀',
           children: [
             {
-              id: 5,
+              id: 6,
               name: 'REINFORCE',
               year: '1992',
               category: 'policy-gradient',
               type: 'on-policy',
               description: 'Monte Carlo policy gradient',
               features: ['Log likelihood', 'Full episodes', 'High variance'],
+              icon: '🧬',
             },
             {
               id: -4,
@@ -115,35 +126,27 @@ const algorithmTree: TreeNode = {
               type: 'framework',
               description: 'Combine policy and value learning',
               features: ['Actor', 'Critic', 'Lower variance'],
+              icon: '🎭',
               children: [
                 {
-                  id: -5,
-                  name: 'Trust Region Methods',
-                  year: '2015',
+                  id: 7,
+                  name: 'A2C',
+                  year: '2016',
                   category: 'policy-gradient',
                   type: 'on-policy',
-                  description: 'Constrained policy updates',
-                  features: ['KL constraint', 'Stable updates'],
-                  children: [
-                    {
-                      id: 6,
-                      name: 'A2C',
-                      year: '2016',
-                      category: 'policy-gradient',
-                      type: 'on-policy',
-                      description: 'Advantage Actor-Critic',
-                      features: ['Advantage', 'Synchronous', 'Baseline'],
-                    },
-                    {
-                      id: 7,
-                      name: 'PPO',
-                      year: '2017',
-                      category: 'policy-gradient',
-                      type: 'on-policy',
-                      description: 'Clipped surrogate objective',
-                      features: ['Clip ratio', 'Simple', 'SOTA'],
-                    },
-                  ],
+                  description: 'Advantage Actor-Critic',
+                  features: ['Advantage', 'Synchronous', 'Baseline'],
+                  icon: '⚡',
+                },
+                {
+                  id: 8,
+                  name: 'PPO',
+                  year: '2017',
+                  category: 'policy-gradient',
+                  type: 'on-policy',
+                  description: 'Clipped surrogate objective',
+                  features: ['Clip ratio', 'Simple', 'SOTA'],
+                  icon: '🏆',
                 },
               ],
             },
@@ -155,29 +158,29 @@ const algorithmTree: TreeNode = {
 }
 
 const categoryColors = {
-  foundation: 'from-blue-500 to-blue-600',
-  'value-based': 'from-green-500 to-green-600',
-  'policy-gradient': 'from-purple-500 to-purple-600',
+  foundation: 'from-blue-400 via-blue-500 to-blue-600',
+  'value-based': 'from-green-400 via-green-500 to-green-600',
+  'policy-gradient': 'from-purple-400 via-purple-500 to-purple-600',
 }
 
-const typeColors = {
-  'on-policy': 'bg-orange-100 text-orange-700 border-orange-300',
-  'off-policy': 'bg-cyan-100 text-cyan-700 border-cyan-300',
-  exploration: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-  framework: 'bg-gray-100 text-gray-700 border-gray-300',
+const typeIcons = {
+  'on-policy': '📈',
+  'off-policy': '🔄',
+  exploration: '🎯',
+  framework: '🏗️',
 }
 
 interface TreeNodeCardProps {
   node: TreeNode
-  level: number
   isCompleted: boolean
   onSelect: (id: number) => void
+  depth: number
 }
 
-function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps) {
-  const [isExpanded, setIsExpanded] = useState(level < 2)
+function TreeNodeCard({ node, isCompleted, onSelect, depth }: TreeNodeCardProps) {
+  const [isExpanded, setIsExpanded] = useState(depth < 2)
   const hasChildren = node.children && node.children.length > 0
-  const isLesson = node.id >= 0 // Actual lessons have id >= 0
+  const isLesson = node.id >= 0
 
   const handleClick = () => {
     if (isLesson) {
@@ -189,150 +192,171 @@ function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps)
 
   return (
     <div className="flex flex-col items-center">
+      {/* Node Card */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: level * 0.05 }}
+        initial={{ opacity: 0, scale: 0.5, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: depth * 0.1, type: 'spring', stiffness: 200 }}
         className="relative"
       >
-        {/* Glow Effect */}
+        {/* Glow for lessons */}
         {isLesson && (
           <motion.div
             animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.05, 1],
+              opacity: [0.4, 0.7, 0.4],
+              scale: [1, 1.1, 1],
             }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className={`absolute inset-0 rounded-xl blur-lg ${
+            transition={{ duration: 2, repeat: Infinity }}
+            className={`absolute -inset-1 rounded-2xl blur-xl ${
               isCompleted ? 'bg-green-400' : 'bg-purple-400'
-            } opacity-30`}
+            }`}
           />
         )}
 
-        {/* Card */}
         <motion.div
-          whileHover={{ 
-            scale: isLesson ? 1.08 : 1.03,
-            rotateY: isLesson ? 5 : 0,
-          }}
+          whileHover={{ scale: 1.05, rotateY: 5 }}
           onClick={handleClick}
           className={`
-            relative p-3 rounded-xl shadow-2xl border backdrop-blur-md
-            ${isLesson ? 'cursor-pointer' : hasChildren ? 'cursor-pointer' : ''}
-            ${isCompleted 
-              ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50' 
-              : 'border-purple-300 bg-gradient-to-br from-white to-purple-50'
+            relative w-44 p-4 rounded-2xl cursor-pointer
+            backdrop-blur-xl border-2 shadow-2xl
+            ${
+              isCompleted
+                ? 'border-green-400 bg-gradient-to-br from-green-50/90 to-emerald-50/90'
+                : 'border-purple-300 bg-gradient-to-br from-white/90 to-purple-50/90'
             }
-            transition-all duration-300 hover:shadow-2xl
-            w-[180px] sm:w-[200px]
+            ${isLesson ? 'hover:border-purple-400' : ''}
+            transition-all duration-300
           `}
-          style={{
-            marginLeft: level * 10,
-          }}
         >
-          {/* Status Icon */}
+          {/* Completion Badge */}
           {isLesson && (
             <motion.div
-              animate={{ rotate: isCompleted ? 360 : 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute -top-2 -right-2"
+              animate={isCompleted ? { rotate: [0, 360] } : {}}
+              transition={{ duration: 0.6 }}
+              className="absolute -top-3 -right-3 z-10"
             >
               {isCompleted ? (
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
-                  <CheckCircle className="w-5 h-5 text-green-500 fill-green-100" />
-                </motion.div>
+                <div className="relative">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 rounded-full bg-green-400 blur-md"
+                  />
+                  <CheckCircle className="relative w-7 h-7 text-green-500 fill-white" />
+                </div>
               ) : (
-                <Circle className="w-5 h-5 text-purple-400" />
+                <Circle className="w-7 h-7 text-purple-400" />
               )}
             </motion.div>
           )}
 
-          {/* Header - Compact */}
-          <div className="mb-2">
-            <h3 className="font-bold text-sm mb-1 text-gray-900">{node.name}</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">{node.year}</span>
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${typeColors[node.type]}`}>
-                {node.type === 'on-policy' && '📈'}
-                {node.type === 'off-policy' && '🔄'}
-                {node.type === 'exploration' && '🎯'}
-                {node.type === 'framework' && '🏗️'}
-              </span>
-            </div>
+          {/* Icon */}
+          <motion.div
+            whileHover={{ scale: 1.2, rotate: 10 }}
+            className="text-4xl mb-2 text-center"
+          >
+            {node.icon}
+          </motion.div>
+
+          {/* Name & Year */}
+          <h3 className="font-bold text-center text-sm mb-1 text-gray-900 leading-tight">
+            {node.name}
+          </h3>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-xs text-gray-500 font-semibold">{node.year}</span>
+            <span className="text-lg">{typeIcons[node.type]}</span>
           </div>
 
-          {/* Description - Compact */}
-          <p className="text-xs text-gray-600 mb-2 line-clamp-2">{node.description}</p>
+          {/* Description */}
+          <p className="text-xs text-gray-600 text-center mb-2 line-clamp-2">
+            {node.description}
+          </p>
 
-          {/* Features - Compact */}
-          <div className="flex flex-wrap gap-1">
+          {/* Features Badges */}
+          <div className="flex flex-wrap gap-1 justify-center">
             {node.features.slice(0, 3).map((feature, idx) => (
               <span
                 key={idx}
-                className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded"
+                className={`text-xs px-2 py-0.5 rounded-full bg-gradient-to-r ${categoryColors[node.category]} text-white font-medium`}
               >
                 {feature}
               </span>
             ))}
           </div>
 
-          {/* Action hint */}
+          {/* Expand/Learn Button */}
+          {hasChildren && (
+            <motion.button
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold shadow-lg"
+            >
+              ▼
+            </motion.button>
+          )}
+
           {isLesson && (
             <motion.div
-              whileHover={{ x: 5 }}
-              className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between text-xs"
+              whileHover={{ x: 3 }}
+              className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-center gap-1 text-xs font-bold text-purple-600"
             >
-              <span className="text-gray-500 font-medium">Learn →</span>
-              <BookOpen className="w-3 h-3 text-purple-400" />
+              <BookOpen className="w-3 h-3" />
+              <span>Learn</span>
             </motion.div>
           )}
-
-          {hasChildren && !isLesson && (
-            <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-center">
-              <motion.button
-                className="text-xs text-purple-600 font-semibold"
-                animate={{ rotate: isExpanded ? 180 : 0 }}
-              >
-                ▼
-              </motion.button>
-            </div>
-          )}
         </motion.div>
-
-        {/* Connection Line to Children */}
-        {hasChildren && isExpanded && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 32 }}
-            className="w-0.5 bg-gradient-to-b from-purple-400 to-transparent mx-auto"
-          />
-        )}
       </motion.div>
+
+      {/* Connection Line */}
+      {hasChildren && isExpanded && (
+        <motion.div
+          initial={{ height: 0 }}
+          animate={{ height: 40 }}
+          className="w-1 bg-gradient-to-b from-purple-400 to-transparent rounded-full"
+        />
+      )}
 
       {/* Children */}
       {hasChildren && isExpanded && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`flex flex-wrap justify-center ${node.children!.length > 1 ? 'gap-2 sm:gap-4' : ''} mt-4 relative`}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative flex justify-center items-start gap-6 mt-2"
         >
+          {/* Horizontal Connector */}
           {node.children!.length > 1 && (
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent -translate-y-4"
-            />
+            <svg
+              className="absolute top-0 left-0 w-full h-full pointer-events-none"
+              style={{ transform: 'translateY(-20px)' }}
+            >
+              <motion.line
+                x1="20%"
+                y1="0"
+                x2="80%"
+                y2="0"
+                stroke="url(#gradient)"
+                strokeWidth="2"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5 }}
+              />
+              <defs>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="transparent" />
+                  <stop offset="50%" stopColor="rgb(168, 85, 247)" />
+                  <stop offset="100%" stopColor="transparent" />
+                </linearGradient>
+              </defs>
+            </svg>
           )}
-          {node.children!.map((child, idx) => (
+
+          {node.children!.map((child) => (
             <TreeNodeCard
               key={child.id}
               node={child}
-              level={level + 1}
               isCompleted={isCompleted}
               onSelect={onSelect}
+              depth={depth + 1}
             />
           ))}
         </motion.div>
@@ -344,186 +368,205 @@ function TreeNodeCard({ node, level, isCompleted, onSelect }: TreeNodeCardProps)
 export default function AlgorithmTree() {
   const navigate = useNavigate()
   const completedChapters = useAppStore((state) => state.completedChapters)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
 
   const handleSelectLesson = (id: number) => {
     navigate(`/learn/${id}`)
   }
 
-  const completedSet = completedChapters instanceof Set
-    ? completedChapters
-    : new Set(completedChapters)
+  const completedSet = completedChapters instanceof Set ? completedChapters : new Set(completedChapters)
+
+  // Dynamic scaling based on container width
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth
+        const baseWidth = 1400 // Base width for 100% scale
+        const newScale = Math.min(containerWidth / baseWidth, 1)
+        setScale(Math.max(newScale, 0.5)) // Min 50% scale
+      }
+    }
+
+    updateScale()
+    window.addEventListener('resize', updateScale)
+    return () => window.removeEventListener('resize', updateScale)
+  }, [])
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900">
       {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+      <div className="absolute inset-0">
         {/* Floating Particles */}
-        {[...Array(100)].map((_, i) => (
+        {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full"
+            initial={{ 
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+            }}
             animate={{
-              x: [
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth,
-              ],
-              y: [
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight,
-              ],
+              y: [null, Math.random() * window.innerHeight],
               opacity: [0, Math.random(), 0],
-              scale: [0, Math.random() * 2, 0],
             }}
             transition={{
-              duration: 5 + Math.random() * 10,
+              duration: 3 + Math.random() * 7,
               repeat: Infinity,
               delay: Math.random() * 5,
             }}
           />
         ))}
 
-        {/* Large Floating Shapes */}
-        {[...Array(10)].map((_, i) => (
-          <motion.div
-            key={`shape-${i}`}
-            className="absolute rounded-full opacity-10"
-            style={{
-              width: 100 + Math.random() * 300,
-              height: 100 + Math.random() * 300,
-              background: `radial-gradient(circle, ${
-                ['#60A5FA', '#A78BFA', '#F472B6'][Math.floor(Math.random() * 3)]
-              }, transparent)`,
-            }}
-            animate={{
-              x: [
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth,
-              ],
-              y: [
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight,
-              ],
-              rotate: [0, 360],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 20 + Math.random() * 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-
-        {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, white 1px, transparent 1px),
-              linear-gradient(to bottom, white 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }}
-        />
+        {/* Radial Gradients */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 py-12">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-12"
         >
           <motion.h1
             animate={{
               textShadow: [
-                '0 0 20px rgba(139, 92, 246, 0.5)',
-                '0 0 40px rgba(139, 92, 246, 0.8)',
-                '0 0 20px rgba(139, 92, 246, 0.5)',
-              ]
+                '0 0 20px rgba(168, 85, 247, 0.8)',
+                '0 0 40px rgba(168, 85, 247, 1)',
+                '0 0 20px rgba(168, 85, 247, 0.8)',
+              ],
             }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="text-4xl md:text-5xl font-bold mb-3 text-white"
+            className="text-5xl md:text-6xl font-black mb-4 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 bg-clip-text text-transparent"
           >
-            🧠 RL Algorithm Universe
+            ✨ RL Universe ✨
           </motion.h1>
-          <p className="text-lg text-purple-200">
-            Discover the evolution of reinforcement learning
+          <p className="text-xl text-purple-200 font-medium">
+            Interactive Algorithm Journey
           </p>
 
-          {/* Compact Stats Card */}
+          {/* Stats Bar */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-6 mt-6 px-6 py-3 bg-white bg-opacity-10 backdrop-blur-xl rounded-full border border-white border-opacity-20"
+            transition={{ delay: 0.3 }}
+            className="inline-flex items-center gap-8 mt-8 px-8 py-4 bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="w-2 h-2 rounded-full bg-blue-400"
-              />
-              <span className="text-sm text-white font-semibold">10 Lessons</span>
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              >
+                <Sparkles className="w-6 h-6 text-blue-300" />
+              </motion.div>
+              <div className="text-left">
+                <div className="text-2xl font-black text-white">9</div>
+                <div className="text-xs text-purple-200">Lessons</div>
+              </div>
             </div>
-            <div className="w-px h-6 bg-white bg-opacity-20" />
-            <div className="flex items-center gap-2">
+
+            <div className="w-px h-12 bg-white/20" />
+
+            <div className="flex items-center gap-3">
               <motion.div
-                animate={{ scale: [1, 1.3, 1] }}
+                animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="w-2 h-2 rounded-full bg-green-400"
-              />
-              <span className="text-sm text-white font-semibold">{completedSet.size} Complete</span>
+              >
+                <Trophy className="w-6 h-6 text-green-300" />
+              </motion.div>
+              <div className="text-left">
+                <div className="text-2xl font-black text-white">{completedSet.size}</div>
+                <div className="text-xs text-purple-200">Completed</div>
+              </div>
             </div>
-            <div className="w-px h-6 bg-white bg-opacity-20" />
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-2 h-2 rounded-full bg-purple-400"
-              />
-              <span className="text-sm text-white font-semibold">
-                {Math.round((completedSet.size / 10) * 100)}%
-              </span>
+
+            <div className="w-px h-12 bg-white/20" />
+
+            <div className="flex items-center gap-3">
+              <div className="relative w-16 h-16">
+                <svg className="transform -rotate-90" viewBox="0 0 36 36">
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth="3"
+                  />
+                  <motion.circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    stroke="url(#progressGradient)"
+                    strokeWidth="3"
+                    strokeDasharray="100"
+                    initial={{ strokeDashoffset: 100 }}
+                    animate={{ strokeDashoffset: 100 - (completedSet.size / 9) * 100 }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                    strokeLinecap="round"
+                  />
+                  <defs>
+                    <linearGradient id="progressGradient">
+                      <stop offset="0%" stopColor="#60A5FA" />
+                      <stop offset="100%" stopColor="#A78BFA" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-sm font-black text-white">
+                  {Math.round((completedSet.size / 9) * 100)}%
+                </div>
+              </div>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Tree Visualization - Responsive */}
-        <div className="overflow-x-auto overflow-y-visible pb-12">
-          <div className="flex justify-center px-4" style={{ minWidth: 'fit-content', transformOrigin: 'center top' }}>
-            <div className="scale-75 sm:scale-90 md:scale-100 origin-top">
+        {/* Tree Container with Dynamic Scaling */}
+        <div ref={containerRef} className="w-full overflow-x-auto overflow-y-visible pb-20">
+          <motion.div
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: 'top center',
+            }}
+            transition={{ duration: 0.3 }}
+            className="inline-block min-w-full"
+          >
+            <div className="flex justify-center py-8">
               <TreeNodeCard
                 node={algorithmTree}
-                level={0}
                 isCompleted={false}
                 onSelect={handleSelectLesson}
+                depth={0}
               />
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Compact Info Card */}
+        {/* Info Footer */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="max-w-2xl mx-auto mt-12 p-6 bg-white bg-opacity-10 backdrop-blur-xl rounded-2xl border border-white border-opacity-20"
+          className="max-w-4xl mx-auto mt-12 p-6 bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-white">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { icon: '📊', label: 'Depth = Timeline' },
-              { icon: '🌳', label: 'Branches = Evolution' },
-              { icon: '🎯', label: 'Click to Learn' },
-              { icon: '✨', label: 'Expand Nodes' },
+              { icon: '🌳', title: 'Tree View', desc: 'Visual hierarchy' },
+              { icon: '⏱️', title: 'Timeline', desc: 'Historical order' },
+              { icon: '🎯', title: 'Interactive', desc: 'Click to learn' },
+              { icon: '✨', title: 'Progress', desc: 'Track completion' },
             ].map((item, idx) => (
               <motion.div
                 key={idx}
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.1, y: -5 }}
                 className="flex flex-col items-center gap-2"
               >
-                <span className="text-3xl">{item.icon}</span>
-                <span className="text-xs font-medium">{item.label}</span>
+                <span className="text-4xl">{item.icon}</span>
+                <div className="text-sm font-bold text-white">{item.title}</div>
+                <div className="text-xs text-purple-200">{item.desc}</div>
               </motion.div>
             ))}
           </div>
@@ -532,4 +575,3 @@ export default function AlgorithmTree() {
     </div>
   )
 }
-

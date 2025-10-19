@@ -1,391 +1,526 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import LessonLayout from './LessonLayout'
-import { StoryBlock, InteractiveDemo, Insight, Challenge, Comparison } from './InteractiveBlock'
-import PlaygroundButton, { QuickTryButton } from './PlaygroundButton'
-import { ArrowRight, Zap, Brain, Target } from 'lucide-react'
+import SubSection from './SubSection'
+import Question from './Question'
+import FormulaReveal from './FormulaReveal'
+import VisualConcept from './VisualConcept'
+import PlaygroundButton from './PlaygroundButton'
+import { Sparkles, Target, Map, Zap } from 'lucide-react'
 
 export default function QLearningLessonNew() {
-  const [selectedAction, setSelectedAction] = useState<number | null>(null)
-  const [qValues, setQValues] = useState({
-    up: 0,
-    right: 5,
-    down: -2,
-    left: 1,
+  const [qValues, setQValues] = useState<{ [key: string]: number }>({
+    'home-park': 0,
+    'home-store': 0,
+    'park-home': 0,
+    'park-lake': 0,
+    'store-home': 0,
+    'store-mall': 0,
   })
 
-  // Simple grid for demonstration
-  const simpleGrid = [
-    { x: 4, y: 0, type: 'goal' as const, value: 10 },
-    { x: 2, y: 1, type: 'obstacle' as const, value: 0 },
+  const [step, setStep] = useState(0)
+
+  const scenarios = [
+    {
+      location: 'Home 🏠',
+      action: 'Go to Park',
+      reward: -1,
+      nextBest: 9,
+      key: 'home-park',
+    },
+    {
+      location: 'Park 🌳',
+      action: 'Go to Lake',
+      reward: 10,
+      nextBest: 0,
+      key: 'park-lake',
+    },
+    {
+      location: 'Home 🏠',
+      action: 'Go to Store',
+      reward: -1,
+      nextBest: 5,
+      key: 'home-store',
+    },
   ]
+
+  const handleLearn = () => {
+    if (step >= scenarios.length) return
+
+    const scenario = scenarios[step]
+    const alpha = 0.5
+    const gamma = 0.9
+
+    const oldQ = qValues[scenario.key]
+    const newQ = oldQ + alpha * (scenario.reward + gamma * scenario.nextBest - oldQ)
+
+    setQValues({ ...qValues, [scenario.key]: newQ })
+    setStep(step + 1)
+  }
+
+  const handleReset = () => {
+    setQValues({
+      'home-park': 0,
+      'home-store': 0,
+      'park-home': 0,
+      'park-lake': 0,
+      'store-home': 0,
+      'store-mall': 0,
+    })
+    setStep(0)
+  }
 
   return (
     <LessonLayout
-      title="Q-Learning"
-      subtitle="Learn to make optimal decisions through trial and error"
-      icon="🧠"
-      difficulty="beginner"
-      estimatedTime="15 min"
-      learningObjectives={[
-        'Understand how agents learn from experience',
-        'Master the Q-Learning update rule intuitively',
-        'See how exploration leads to better strategies',
-        'Apply Q-Learning to solve maze problems',
+      title="The Learning Robot"
+      subtitle="Watch how Q-Learning discovers the perfect path"
+      icon="🤖"
+      difficulty="medium"
+      duration="15 minutes"
+      objectives={[
+        'Understand Q-values through visual metaphors',
+        'See the learning process step-by-step',
+        'Master the Q-Learning update rule',
       ]}
-      playgroundConfig={{
-        algorithm: 'qlearning',
-        environment: 'classic-grid',
-        parameters: {
-          alpha: 0.1,
-          gamma: 0.9,
-          epsilon: 0.1,
-          n_episodes: 100,
-        },
-        gridConfig: simpleGrid,
-      }}
-      prerequisites={['Understanding of Markov Decision Processes']}
+      prerequisites={['Multi-Armed Bandit', 'Markov Decision Process']}
     >
-      {/* Story Introduction */}
-      <StoryBlock title="🎮 Imagine You're a Game Character">
-        <div className="space-y-4">
-          <p className="text-lg leading-relaxed">
-            You're a robot 🤖 trapped in a mysterious maze. You don't have a map, and you don't know where the treasure 🏆 is.
-            But you can move around, and every time you make a move, something happens:
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-4 my-6">
-            {[
-              { emoji: '💎', label: 'Find gems', reward: '+1', color: 'from-yellow-400 to-orange-500' },
-              { emoji: '🧱', label: 'Hit walls', reward: '-1', color: 'from-gray-400 to-gray-600' },
-              { emoji: '🏆', label: 'Reach goal', reward: '+10', color: 'from-green-400 to-emerald-500' },
-            ].map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className={`bg-gradient-to-br ${item.color} rounded-xl p-4 text-white shadow-lg text-center`}
-              >
-                <div className="text-4xl mb-2">{item.emoji}</div>
-                <div className="font-semibold">{item.label}</div>
-                <div className="text-2xl font-bold mt-1">{item.reward}</div>
-              </motion.div>
-            ))}
-          </div>
+      {/* Section 1: The Story */}
+      <SubSection id="story" title="The Lost Robot" icon="🤖" variant="story">
+        <VisualConcept title="A Robot's Journey" emoji="🗺️" color="blue">
+          <div className="space-y-4 text-center">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-gray-700 leading-relaxed"
+            >
+              Imagine a robot waking up in an unfamiliar city. It has a mission: <span className="font-bold text-blue-600">find the best ice cream shop</span>.
+            </motion.p>
 
-          <p className="text-lg leading-relaxed">
-            <strong className="text-purple-600">Q-Learning is like being that robot.</strong> You learn by trying different paths,
-            remembering which moves led to treasure, and which led to dead ends. Over time, you build a mental map of what to do in each situation.
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex justify-center items-center gap-6 py-6"
+            >
+              <div className="text-center">
+                <div className="text-5xl mb-2">🤖</div>
+                <div className="text-sm font-semibold text-gray-600">Robot</div>
+              </div>
+              <div className="text-4xl">→</div>
+              <div className="text-center">
+                <div className="text-5xl mb-2">❓</div>
+                <div className="text-sm font-semibold text-gray-600">Unknown City</div>
+              </div>
+              <div className="text-4xl">→</div>
+              <div className="text-center">
+                <div className="text-5xl mb-2">🍦</div>
+                <div className="text-sm font-semibold text-gray-600">Goal</div>
+              </div>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-gray-700 leading-relaxed"
+            >
+              The robot doesn't have a map. It must <span className="font-bold text-purple-600">explore, learn, and remember</span> which paths lead to rewards.
+            </motion.p>
+          </div>
+        </VisualConcept>
+
+        <div className="mt-6 p-4 rounded-xl bg-purple-100 border border-purple-300">
+          <p className="text-gray-800">
+            <span className="font-bold">The Challenge:</span> How does the robot learn which actions are good without a teacher telling it what to do?
           </p>
         </div>
-      </StoryBlock>
+      </SubSection>
 
-      {/* Interactive Q-Value Demo */}
-      <InteractiveDemo title="🎯 Interactive: How Q-Values Work">
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            At every position, you have <strong>Q-values</strong> for each possible action. Think of them as your "gut feeling" about how good each move is.
-          </p>
+      {/* Question 1 - Easy */}
+      <Question
+        id="q1"
+        question="What does the robot need to learn?"
+        options={[
+          'The name of every street in the city',
+          'Which actions from each location lead to the best rewards',
+          'How to walk faster',
+          'The exact coordinates of the ice cream shop',
+        ]}
+        correctIndex={1}
+        difficulty="easy"
+        explanation="Exactly! The robot needs to learn which actions (like 'go left' or 'go right') from each location will eventually lead it to the best rewards. This is the essence of Q-Learning!"
+        hint="Think about what would help the robot make better decisions at each location."
+      />
 
-          <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200">
-            <div className="text-center mb-6">
-              <div className="inline-block relative">
-                <div className="text-6xl">🤖</div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  ?
-                </div>
-              </div>
-              <p className="mt-2 text-gray-600">Which way should I go?</p>
-            </div>
+      {/* Section 2: Q-Values Concept */}
+      <SubSection id="q-values" title="The Quality Score" icon="⭐" variant="concept">
+        <VisualConcept title="What is a Q-Value?" emoji="🎯" color="purple">
+          <div className="space-y-6">
+            <p className="text-lg text-gray-700 text-center leading-relaxed">
+              A <span className="font-bold text-purple-600">Q-value</span> is like a <span className="font-bold">quality rating</span> for each action the robot can take.
+            </p>
 
-            {/* Action buttons with Q-values */}
-            <div className="grid grid-cols-2 gap-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
               {[
-                { action: 'up', emoji: '⬆️', label: 'Move Up', q: qValues.up },
-                { action: 'right', emoji: '➡️', label: 'Move Right', q: qValues.right },
-                { action: 'down', emoji: '⬇️', label: 'Move Down', q: qValues.down },
-                { action: 'left', emoji: '⬅️', label: 'Move Left', q: qValues.left },
-              ].map((item) => {
-                const isSelected = selectedAction === item.action
-                const isBest = item.q === Math.max(...Object.values(qValues))
-                
-                return (
-                  <motion.button
-                    key={item.action}
-                    onClick={() => setSelectedAction(item.action)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`
-                      relative p-4 rounded-xl border-2 transition-all
-                      ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-gray-200 bg-gray-50'}
-                      ${isBest ? 'ring-2 ring-green-400' : ''}
-                    `}
-                  >
-                    {isBest && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        ✓
-                      </div>
-                    )}
-                    <div className="text-3xl mb-2">{item.emoji}</div>
-                    <div className="text-sm font-semibold text-gray-700">{item.label}</div>
-                    <div className={`text-2xl font-bold mt-1 ${item.q > 0 ? 'text-green-600' : item.q < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                      Q = {item.q}
-                    </div>
-                  </motion.button>
-                )
-              })}
-            </div>
+                { emoji: '📍', label: 'Location', desc: 'Where am I?' },
+                { emoji: '🎬', label: 'Action', desc: 'What can I do?' },
+                { emoji: '⭐', label: 'Q-Value', desc: 'How good is it?' },
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 + idx * 0.1 }}
+                  className="p-4 rounded-xl bg-white border-2 border-purple-200 text-center"
+                >
+                  <div className="text-4xl mb-2">{item.emoji}</div>
+                  <div className="font-bold text-gray-900 mb-1">{item.label}</div>
+                  <div className="text-sm text-gray-600">{item.desc}</div>
+                </motion.div>
+              ))}
+            </motion.div>
 
-            <div className="mt-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-              <p className="text-sm text-green-900">
-                <strong>💡 The robot chooses the action with the highest Q-value!</strong> In this case, moving right (Q=5) looks most promising.
+            <div className="p-6 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200">
+              <p className="text-center text-lg font-semibold text-gray-800">
+                Q(State, Action) = <span className="text-purple-600">"Expected future reward"</span>
               </p>
             </div>
           </div>
+        </VisualConcept>
+
+        <div className="mt-6">
+          <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-yellow-500" />
+            Think of it like restaurant ratings
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+              <div className="text-2xl mb-2">🍕 High Q-Value (9.5/10)</div>
+              <p className="text-sm text-gray-700">"Going to this restaurant usually leads to great meals!"</p>
+            </div>
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+              <div className="text-2xl mb-2">🥗 Low Q-Value (3.2/10)</div>
+              <p className="text-sm text-gray-700">"This place often disappoints..."</p>
+            </div>
+          </div>
         </div>
-      </InteractiveDemo>
+      </SubSection>
 
-      {/* The Learning Process */}
-      <StoryBlock title="🎓 How Does Learning Happen?">
-        <div className="space-y-4">
-          <p className="text-lg">
-            Here's the magic: <strong className="text-purple-600">Q-values start at zero</strong> (the robot knows nothing). 
-            Then, through experience, they get updated based on:
-          </p>
+      {/* Question 2 - Easy */}
+      <Question
+        id="q2"
+        question="If a Q-value is high, what does that mean?"
+        options={[
+          'The action is quick to perform',
+          'The action will likely lead to good rewards in the future',
+          'The action has been tried many times',
+          'The action is difficult',
+        ]}
+        correctIndex={1}
+        difficulty="easy"
+        explanation="Perfect! A high Q-value means the action is expected to lead to good rewards. It's like a recommendation: 'This is a good choice!'"
+        hint="Think about what a high rating on a restaurant review means."
+      />
 
-          <div className="my-6 space-y-4">
-            {[
-              {
-                step: 1,
-                icon: '🎯',
-                title: 'Take an action',
-                desc: 'The robot moves and sees what happens',
-                color: 'from-blue-400 to-blue-600',
-              },
-              {
-                step: 2,
-                icon: '🎁',
-                title: 'Get a reward',
-                desc: 'Did it find treasure or hit a wall?',
-                color: 'from-green-400 to-green-600',
-              },
-              {
-                step: 3,
-                icon: '👀',
-                title: 'Look ahead',
-                desc: 'From the new position, what\'s the best future move?',
-                color: 'from-purple-400 to-purple-600',
-              },
-              {
-                step: 4,
-                icon: '📝',
-                title: 'Update knowledge',
-                desc: 'Adjust the Q-value based on what was learned',
-                color: 'from-pink-400 to-pink-600',
-              },
-            ].map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="flex items-start gap-4"
-              >
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${item.color} flex-shrink-0 flex items-center justify-center shadow-lg`}>
-                  <span className="text-3xl">{item.icon}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`w-8 h-8 rounded-full bg-gradient-to-br ${item.color} text-white flex items-center justify-center font-bold text-sm`}>
-                      {item.step}
-                    </span>
-                    <h4 className="font-bold text-gray-900">{item.title}</h4>
+      {/* Section 3: Learning Process */}
+      <SubSection id="learning" title="How Does Learning Happen?" icon="🧠" variant="concept">
+        <VisualConcept title="The Learning Cycle" emoji="🔄" color="green">
+          <div className="space-y-4">
+            <p className="text-center text-gray-700 text-lg leading-relaxed">
+              The robot improves its Q-values through <span className="font-bold text-green-600">experience</span>:
+            </p>
+
+            <div className="relative">
+              {[
+                { num: '1', emoji: '👀', title: 'Observe', desc: 'Where am I now?', color: 'blue' },
+                { num: '2', emoji: '🎲', title: 'Act', desc: 'Try an action', color: 'purple' },
+                { num: '3', emoji: '🎁', title: 'Receive', desc: 'Get a reward', color: 'green' },
+                { num: '4', emoji: '📝', title: 'Update', desc: 'Adjust Q-value', color: 'orange' },
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.2 }}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-white border-2 border-gray-200 mb-3"
+                >
+                  <div className={`flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-${item.color}-400 to-${item.color}-600 flex items-center justify-center text-white font-black text-xl`}>
+                    {item.num}
                   </div>
-                  <p className="text-gray-600">{item.desc}</p>
-                </div>
+                  <div className="text-3xl">{item.emoji}</div>
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900">{item.title}</div>
+                    <div className="text-sm text-gray-600">{item.desc}</div>
+                  </div>
+                  {idx < 3 && <div className="text-2xl text-gray-400">→</div>}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </VisualConcept>
+
+        {/* Interactive Learning Demo */}
+        <div className="mt-6 p-6 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-300">
+          <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-600" />
+            Interactive Learning Demo
+          </h4>
+
+          <div className="mb-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(qValues).map(([key, value]) => (
+              <motion.div
+                key={key}
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.5 }}
+                className="p-3 rounded-lg bg-white border border-gray-200 text-center"
+              >
+                <div className="text-xs text-gray-500 mb-1">{key.replace('-', ' → ')}</div>
+                <div className="text-2xl font-bold text-purple-600">{value.toFixed(2)}</div>
               </motion.div>
             ))}
           </div>
-        </div>
-      </StoryBlock>
 
-      {/* Quick Playground Try */}
-      <div className="my-8">
-        <PlaygroundButton
-          algorithm="qlearning"
-          environment="classic-grid"
-          parameters={{ alpha: 0.1, gamma: 0.9, epsilon: 0.1, n_episodes: 100 }}
-          gridConfig={simpleGrid}
-          label="🎮 See Q-Learning in Action!"
-          description="Watch the robot learn to navigate a simple maze"
-          size="large"
+          {step < scenarios.length && (
+            <div className="mb-4 p-4 rounded-lg bg-yellow-100 border border-yellow-300">
+              <p className="font-semibold text-gray-900 mb-2">Step {step + 1}:</p>
+              <p className="text-gray-700">
+                At <span className="font-bold">{scenarios[step].location}</span>, try action{' '}
+                <span className="font-bold">{scenarios[step].action}</span>
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Reward: {scenarios[step].reward}, Best future: {scenarios[step].nextBest}
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLearn}
+              disabled={step >= scenarios.length}
+              className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {step >= scenarios.length ? 'All Steps Complete! 🎉' : 'Learn from Experience'}
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleReset}
+              className="px-6 py-3 rounded-lg bg-gray-600 text-white font-bold shadow-lg"
+            >
+              Reset
+            </motion.button>
+          </div>
+        </div>
+      </SubSection>
+
+      {/* Question 3 - Medium */}
+      <Question
+        id="q3"
+        question="After taking an action and receiving a reward, what should the robot do with its Q-value?"
+        options={[
+          'Replace it completely with the reward',
+          'Keep it unchanged',
+          'Update it by combining the old value with new information',
+          'Delete it and start over',
+        ]}
+        correctIndex={2}
+        difficulty="medium"
+        explanation="Excellent! The robot updates the Q-value by combining old knowledge with new information. This gradual learning is more stable than completely replacing the value each time."
+        hint="Think about how you learn - do you forget everything you knew before, or do you adjust your beliefs?"
+      />
+
+      {/* Section 4: The Formula */}
+      <SubSection id="formula" title="The Mathematics" icon="📐" variant="concept">
+        <FormulaReveal
+          title="Q-Learning Update Rule"
+          description="Now that you understand the intuition, let's see the mathematical formula that makes it all work."
+          formula="Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right]"
+          intuition="Take your current belief (old Q-value), see what actually happened (reward + best future), and adjust your belief a little bit based on the difference."
+          variables={[
+            { symbol: 's', meaning: 'Current state (location)' },
+            { symbol: 'a', meaning: 'Action taken' },
+            { symbol: 'α', meaning: 'Learning rate (how fast to learn)' },
+            { symbol: 'r', meaning: 'Reward received' },
+            { symbol: 'γ', meaning: 'Discount factor (value future vs now)' },
+            { symbol: "s'", meaning: 'Next state' },
+            { symbol: "a'", meaning: 'Possible next actions' },
+          ]}
         />
-      </div>
 
-      {/* Key Insight */}
-      <Insight title="🔑 The Key Insight">
-        <div className="space-y-4">
-          <p className="text-lg font-semibold text-gray-900">
-            Q-Learning is <strong className="text-yellow-600">off-policy</strong>. What does that mean?
-          </p>
-          <p className="text-gray-700">
-            The robot can learn about the best strategy even while exploring randomly! It's like a student who learns by watching what
-            the best students do, even while trying their own experiments.
-          </p>
-          
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <div className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
-              <div className="text-2xl mb-2">🎲 While Exploring...</div>
-              <p className="text-sm text-gray-700">Robot tries random moves (epsilon-greedy)</p>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
-              <div className="text-2xl mb-2">🧠 While Learning...</div>
-              <p className="text-sm text-gray-700">Updates assume best future actions</p>
-            </div>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+            <h5 className="font-bold text-blue-900 mb-2">🐢 Small α (e.g., 0.1)</h5>
+            <p className="text-sm text-gray-700">Learns slowly, more stable, less sensitive to outliers</p>
+          </div>
+          <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
+            <h5 className="font-bold text-purple-900 mb-2">🐇 Large α (e.g., 0.9)</h5>
+            <p className="text-sm text-gray-700">Learns quickly, adapts fast, but can be unstable</p>
           </div>
         </div>
-      </Insight>
+      </SubSection>
 
-      {/* Challenge */}
-      <Challenge title="🎯 Challenge: Tune the Parameters">
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Ready to experiment? Try different configurations to see how they affect learning:
-          </p>
+      {/* Question 4 - Medium */}
+      <Question
+        id="q4"
+        question="In the Q-Learning formula, what does the term 'max Q(s', a')' represent?"
+        options={[
+          'The maximum reward ever received',
+          'The best Q-value from the next state',
+          'The average of all Q-values',
+          'The current state&apos;s Q-value',
+        ]}
+        correctIndex={1}
+        difficulty="medium"
+        explanation="Perfect! The max Q(s', a') is the highest Q-value available from the next state. This represents the best possible future the robot can expect, which helps it evaluate whether its current action was worthwhile."
+        hint="Think about looking ahead - what's the best outcome the robot could achieve from where it lands?"
+      />
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <QuickTryButton
-                config={{
-                  algorithm: 'qlearning',
-                  environment: 'classic-grid',
-                  parameters: { alpha: 0.5, gamma: 0.9, epsilon: 0.3, n_episodes: 100 },
-                }}
-                label="🚀 Fast Learner (α=0.5, ε=0.3)"
-              />
-              <p className="text-xs text-gray-600 pl-2">High learning rate + lots of exploration</p>
-            </div>
+      {/* Question 5 - Hard */}
+      <Question
+        id="q5"
+        question="Why does Q-Learning use the MAX operation instead of the actual next action?"
+        options={[
+          'To make the math easier',
+          'Because it learns off-policy: evaluates optimal actions even while exploring',
+          'To avoid negative rewards',
+          'Because it&apos;s faster to compute',
+        ]}
+        correctIndex={1}
+        difficulty="hard"
+        explanation="Outstanding! This is the KEY insight of Q-Learning. It's 'off-policy' because it learns about the optimal policy (max) while actually following an exploratory policy (like epsilon-greedy). This separation allows it to learn the best actions even while trying random actions!"
+        hint="Consider: what if the robot explores randomly, but still wants to learn what the BEST action would have been?"
+      />
 
-            <div className="space-y-2">
-              <QuickTryButton
-                config={{
-                  algorithm: 'qlearning',
-                  environment: 'classic-grid',
-                  parameters: { alpha: 0.01, gamma: 0.99, epsilon: 0.05, n_episodes: 200 },
-                }}
-                label="🐢 Careful Learner (α=0.01, ε=0.05)"
-              />
-              <p className="text-xs text-gray-600 pl-2">Slow learning + minimal exploration</p>
-            </div>
-          </div>
-
-          <div className="mt-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded-lg">
-            <p className="text-sm text-orange-900">
-              <strong>Question:</strong> Which one finds the goal faster? Which one finds the BEST path?
+      {/* Section 5: Try it Yourself */}
+      <SubSection id="practice" title="Practice in the Playground" icon="🎮" variant="practice">
+        <VisualConcept title="Time to Experiment!" emoji="🚀" color="green">
+          <div className="space-y-4 text-center">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              You now understand Q-Learning! Let's see it in action on a real grid world.
             </p>
-          </div>
-        </div>
-      </Challenge>
 
-      {/* The Math (But Make It Optional) */}
-      <InteractiveDemo title="🔢 For the Math Curious: The Update Rule" defaultExpanded={false}>
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            If you want to see the formula, here it is. But remember: the intuition above is what really matters!
-          </p>
+            <div className="flex justify-center gap-4 flex-wrap">
+              <PlaygroundButton
+                algorithm="qlearning"
+                environment="gridworld"
+                parameters={{
+                  alpha: 0.1,
+                  gamma: 0.9,
+                  epsilon: 0.1,
+                  n_episodes: 100,
+                }}
+                gridConfig={{
+                  width: 5,
+                  height: 5,
+                  start: { x: 0, y: 0 },
+                  goal: { x: 4, y: 4 },
+                  obstacles: [
+                    { x: 2, y: 1 },
+                    { x: 2, y: 2 },
+                    { x: 2, y: 3 },
+                  ],
+                  rewards: [{ x: 4, y: 0, value: 5 }],
+                }}
+              >
+                🎯 Try Simple Maze
+              </PlaygroundButton>
 
-          <div className="bg-gray-900 rounded-xl p-6 text-white font-mono overflow-x-auto">
-            <div className="text-center text-lg mb-4">
-              Q(s, a) ← Q(s, a) + α [<span className="text-yellow-300">r</span> + γ max Q(s', a') - Q(s, a)]
+              <PlaygroundButton
+                algorithm="qlearning"
+                environment="gridworld"
+                parameters={{
+                  alpha: 0.2,
+                  gamma: 0.95,
+                  epsilon: 0.2,
+                  n_episodes: 200,
+                }}
+                gridConfig={{
+                  width: 6,
+                  height: 6,
+                  start: { x: 0, y: 0 },
+                  goal: { x: 5, y: 5 },
+                  obstacles: [
+                    { x: 1, y: 2 },
+                    { x: 2, y: 2 },
+                    { x: 3, y: 2 },
+                    { x: 3, y: 3 },
+                    { x: 3, y: 4 },
+                  ],
+                  rewards: [],
+                }}
+              >
+                🏆 Try Hard Maze
+              </PlaygroundButton>
             </div>
-            
-            <div className="grid md:grid-cols-2 gap-4 text-sm mt-4">
-              <div>
-                <strong className="text-blue-300">Q(s, a)</strong> = Q-value for state s, action a
-              </div>
-              <div>
-                <strong className="text-green-300">α (alpha)</strong> = Learning rate (0-1)
-              </div>
-              <div>
-                <strong className="text-yellow-300">r</strong> = Reward received
-              </div>
-              <div>
-                <strong className="text-purple-300">γ (gamma)</strong> = Discount factor (0-1)
-              </div>
-              <div>
-                <strong className="text-pink-300">s'</strong> = Next state
-              </div>
-              <div>
-                <strong className="text-cyan-300">max Q(s', a')</strong> = Best Q-value in next state
-              </div>
-            </div>
           </div>
+        </VisualConcept>
 
-          <p className="text-gray-700 italic">
-            💡 Translation: "Update your estimate by learning from the difference between what you expected and what you got (plus what you can get next)."
-          </p>
+        <div className="mt-6 p-6 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-300">
+          <h4 className="font-bold text-xl mb-3 flex items-center gap-2">
+            <Target className="w-5 h-5" />
+            Experiments to Try:
+          </h4>
+          <ul className="space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">•</span>
+              <span className="text-gray-800">Set α=0.1 vs α=0.9 - which learns better?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">•</span>
+              <span className="text-gray-800">Set γ=0.1 (short-sighted) vs γ=0.99 (far-sighted) - what changes?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">•</span>
+              <span className="text-gray-800">Add multiple reward cells - does the agent find all of them?</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-600 font-bold">•</span>
+              <span className="text-gray-800">Watch how Q-values change over episodes in the visualization!</span>
+            </li>
+          </ul>
         </div>
-      </InteractiveDemo>
+      </SubSection>
 
-      {/* Comparison */}
-      <Comparison title="⚖️ Q-Learning vs Other Methods">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b-2 border-gray-300">
-                <th className="text-left p-3 font-bold text-gray-900">Feature</th>
-                <th className="text-left p-3 font-bold text-purple-600">Q-Learning</th>
-                <th className="text-left p-3 font-bold text-blue-600">SARSA</th>
-                <th className="text-left p-3 font-bold text-green-600">REINFORCE</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              <tr className="hover:bg-gray-50">
-                <td className="p-3 font-semibold">Learning Type</td>
-                <td className="p-3">Off-policy</td>
-                <td className="p-3">On-policy</td>
-                <td className="p-3">On-policy</td>
-              </tr>
-              <tr className="hover:bg-gray-50">
-                <td className="p-3 font-semibold">Best For</td>
-                <td className="p-3">Finding optimal path</td>
-                <td className="p-3">Safe exploration</td>
-                <td className="p-3">Complex policies</td>
-              </tr>
-              <tr className="hover:bg-gray-50">
-                <td className="p-3 font-semibold">Speed</td>
-                <td className="p-3">⚡⚡⚡ Fast</td>
-                <td className="p-3">⚡⚡ Moderate</td>
-                <td className="p-3">⚡ Slower</td>
-              </tr>
-            </tbody>
-          </table>
+      {/* Final Summary */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="mt-12 p-6 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-2xl"
+      >
+        <h3 className="text-2xl font-black mb-4 flex items-center gap-2">
+          <Sparkles className="w-6 h-6" />
+          What You've Mastered
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { emoji: '⭐', text: 'Q-values represent expected future rewards' },
+            { emoji: '🔄', text: 'Learning happens through trial and error' },
+            { emoji: '📊', text: 'Updates blend old knowledge with new experiences' },
+            { emoji: '🎯', text: 'Off-policy: learns optimal while exploring' },
+          ].map((item, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="flex items-center gap-3 p-3 rounded-lg bg-white/10 backdrop-blur-sm"
+            >
+              <span className="text-2xl">{item.emoji}</span>
+              <span className="font-medium">{item.text}</span>
+            </motion.div>
+          ))}
         </div>
-      </Comparison>
-
-      {/* Final CTA */}
-      <div className="mt-12 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500 rounded-2xl p-8 text-white shadow-2xl"
-        >
-          <div className="text-5xl mb-4">🎓</div>
-          <h3 className="text-2xl font-bold mb-2">Ready to Master Q-Learning?</h3>
-          <p className="text-blue-100 mb-6">
-            Head to the playground and create your own mazes. Watch the agent learn from scratch!
-          </p>
-          <PlaygroundButton
-            algorithm="qlearning"
-            environment="classic-grid"
-            label="Open Playground"
-            size="large"
-          />
-        </motion.div>
-      </div>
+      </motion.div>
     </LessonLayout>
   )
 }
-

@@ -1,410 +1,511 @@
 import { motion } from 'framer-motion'
-import { Shield, Zap, TrendingDown, AlertTriangle, Target, Scale } from 'lucide-react'
 import LessonLayout from './LessonLayout'
-import InteractiveBlock from './InteractiveBlock'
+import SubSection from './SubSection'
+import Question from './Question'
+import FormulaReveal from './FormulaReveal'
+import VisualConcept from './VisualConcept'
 import PlaygroundButton from './PlaygroundButton'
-import 'katex/dist/katex.min.css'
+import { Shield, Zap, Target } from 'lucide-react'
 
 export default function SARSAStory() {
   return (
     <LessonLayout
-      title="The Cautious Explorer 🛡️"
-      difficulty="Intermediate"
-      duration="15 min"
+      title="The Cautious Explorer"
+      subtitle="Learning safely while exploring dangerous territories"
+      icon="🛡️"
+      difficulty="medium"
+      duration="12 minutes"
       objectives={[
-        'Understand the difference between on-policy and off-policy learning',
-        'Learn how SARSA respects its own exploration strategy',
-        'Compare SARSA\'s cautious behavior with Q-Learning\'s boldness',
-        'Know when to use SARSA vs Q-Learning in real applications'
+        'Understand on-policy vs off-policy learning',
+        'Master the SARSA update rule',
+        'Know when to use SARSA over Q-Learning',
       ]}
       prerequisites={['Q-Learning', 'MDP Basics']}
     >
-      {/* Story Introduction */}
-      <InteractiveBlock type="story" title="🎭 Two Explorers, Two Philosophies" defaultExpanded>
-        <div className="space-y-4">
-          <p className="text-lg leading-relaxed">
-            Remember our robot learning to navigate mazes with Q-Learning? It was <strong>bold and reckless</strong>—
-            always imagining the best possible future, even when that meant walking dangerously close to cliffs during training.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <motion.div 
-              className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border-2 border-red-300"
-              whileHover={{ scale: 1.03 }}
-            >
-              <div className="text-4xl mb-3">🦸 Q-Learning</div>
-              <h3 className="text-xl font-bold text-red-900 mb-2">The Daredevil</h3>
-              <p className="text-gray-700 mb-3">
-                "I&apos;ll explore randomly now, but assume I&apos;ll always make perfect decisions later!"
-              </p>
-              <div className="bg-red-100 rounded-lg p-3 text-sm">
-                <strong>Philosophy:</strong> Learn the optimal policy, even if you don&apos;t follow it yet
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-300"
-              whileHover={{ scale: 1.03 }}
-            >
-              <div className="text-4xl mb-3">🛡️ SARSA</div>
-              <h3 className="text-xl font-bold text-blue-900 mb-2">The Realist</h3>
-              <p className="text-gray-700 mb-3">
-                "I&apos;ll learn a policy that accounts for my actual exploration habits!"
-              </p>
-              <div className="bg-blue-100 rounded-lg p-3 text-sm">
-                <strong>Philosophy:</strong> Learn the value of what you actually do, mistakes and all
-              </div>
-            </motion.div>
-          </div>
-
-          <motion.div 
-            className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-300 mt-6"
-            whileHover={{ scale: 1.01 }}
-          >
-            <p className="text-lg font-semibold text-purple-900">
-              SARSA stands for <strong>S</strong>tate - <strong>A</strong>ction - <strong>R</strong>eward - 
-              <strong>S</strong>tate&apos; - <strong>A</strong>ction&apos;. It uses the <em>actual next action</em> (A&apos;) 
-              you plan to take, not the best possible action.
+      {/* Section 1: The Story */}
+      <SubSection id="story" title="Two Explorers" icon="🥾" variant="story">
+        <VisualConcept title="A Tale of Two Strategies" emoji="⚖️" color="blue">
+          <div className="space-y-6">
+            <p className="text-lg text-gray-700 text-center leading-relaxed mb-6">
+              Two robots explore a dangerous cliff path. One is <span className="font-bold text-blue-600">bold</span>, the other{' '}
+              <span className="font-bold text-green-600">cautious</span>.
             </p>
-          </motion.div>
-        </div>
-      </InteractiveBlock>
 
-      {/* On-Policy vs Off-Policy */}
-      <InteractiveBlock type="interactive" title="📊 The Critical Difference">
-        <div className="space-y-6">
-          <p className="text-lg leading-relaxed">
-            The distinction between on-policy (SARSA) and off-policy (Q-Learning) is subtle but profound:
-          </p>
-
-          <div className="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-200">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-orange-400 flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-white" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="p-6 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300"
+              >
+                <div className="text-center mb-4">
+                  <div className="text-6xl mb-2">🤖</div>
+                  <h4 className="text-xl font-bold text-blue-900">Q-Bot (Bold)</h4>
+                </div>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Explores randomly (epsilon-greedy)</span>
                   </div>
-                  <h3 className="text-xl font-bold">Q-Learning Update</h3>
-                </div>
-                <div className="bg-red-50 rounded-lg p-4 font-mono text-sm border-2 border-red-200 mb-3">
-                  Q(s,a) ← Q(s,a) + α[r + γ·<strong className="text-red-700">max</strong> Q(s&apos;,a&apos;) - Q(s,a)]
-                </div>
-                <p className="text-sm text-gray-600">
-                  Uses <strong className="text-red-700">max Q(s&apos;,a&apos;)</strong> — the best possible next action, 
-                  regardless of what you&apos;ll actually do
-                </p>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-white" />
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>But LEARNS about optimal risky path</span>
                   </div>
-                  <h3 className="text-xl font-bold">SARSA Update</h3>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>&quot;I&apos;ll explore randomly, but learn the fastest route!&quot;</span>
+                  </div>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4 font-mono text-sm border-2 border-blue-200 mb-3">
-                  Q(s,a) ← Q(s,a) + α[r + γ·<strong className="text-blue-700">Q(s&apos;,a&apos;)</strong> - Q(s,a)]
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="p-6 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300"
+              >
+                <div className="text-center mb-4">
+                  <div className="text-6xl mb-2">🤖</div>
+                  <h4 className="text-xl font-bold text-green-900">SARSA-Bot (Cautious)</h4>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Uses <strong className="text-blue-700">Q(s&apos;,a&apos;)</strong> — the action you&apos;ll actually take next 
-                  (chosen by your ε-greedy policy)
-                </p>
-              </div>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>Explores randomly (epsilon-greedy)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>LEARNS about the safe exploring path</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>&quot;I&apos;ll learn the path I actually take!&quot;</span>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </div>
 
-          <motion.div 
-            className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-300"
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-bold text-yellow-900 mb-2">Why This Matters</h4>
-                <p className="text-gray-700">
-                  If you&apos;re exploring randomly 10% of the time (ε = 0.1), SARSA learns &quot;I might randomly fall off the cliff,&quot; 
-                  while Q-Learning learns &quot;I&apos;ll never fall if I play perfectly.&quot; SARSA is more <strong>realistic</strong> 
-                  about the risks of exploration!
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </InteractiveBlock>
-
-      {/* The Cliff Walking Problem */}
-      <InteractiveBlock type="interactive" title="🏔️ The Cliff Scenario">
-        <div className="space-y-6">
-          <p className="text-lg leading-relaxed">
-            Imagine a gridworld with a cliff. There&apos;s a short, risky path along the cliff edge (+100 reward, but one wrong step = -100), 
-            and a longer, safer path further inland (+100 reward, takes more steps).
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <motion.div 
-              className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border-2 border-red-300"
-              whileHover={{ y: -5 }}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <Zap className="w-8 h-8 text-red-600" />
-                <h3 className="text-xl font-bold text-red-900">Q-Learning&apos;s Choice</h3>
-              </div>
-              <div className="space-y-3">
-                <p className="text-sm text-gray-700">
-                  <strong>During Training:</strong> &quot;I&apos;ll take the cliff path—it&apos;s optimal! Oh no, I fell... 
-                  but I&apos;ll learn that&apos;s the best path anyway.&quot;
-                </p>
-                <p className="text-sm text-gray-700">
-                  <strong>After Training:</strong> Takes the cliff edge (if ε=0) 
-                  because it learned that&apos;s the optimal route
-                </p>
-                <div className="bg-red-100 rounded-lg p-3 text-xs">
-                  ⚡ Result: <strong>Optimal but risky</strong> path during learning phase
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-300"
-              whileHover={{ y: -5 }}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <Shield className="w-8 h-8 text-blue-600" />
-                <h3 className="text-xl font-bold text-blue-900">SARSA&apos;s Choice</h3>
-              </div>
-              <div className="space-y-3">
-                <p className="text-sm text-gray-700">
-                  <strong>During Training:</strong> &quot;With my random exploration, I might fall. Better learn 
-                  a path that&apos;s safe even when I explore!&quot;
-                </p>
-                <p className="text-sm text-gray-700">
-                  <strong>After Training:</strong> Takes the safer inland route, avoiding the cliff altogether
-                </p>
-                <div className="bg-blue-100 rounded-lg p-3 text-xs">
-                  🛡️ Result: <strong>Safer</strong> path that accounts for exploration risks
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <motion.div 
-            className="bg-purple-50 rounded-xl p-6 border-2 border-purple-300"
-            whileHover={{ scale: 1.01 }}
-          >
-            <div className="flex items-start gap-3">
-              <Scale className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
-              <div>
-                <h4 className="font-bold text-purple-900 mb-2">The Trade-off</h4>
-                <p className="text-gray-700">
-                  SARSA learns a policy that&apos;s safer during exploration but might not find the absolute optimal path. 
-                  Q-Learning learns the optimal path but can be dangerous while learning. Choose based on your priorities!
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </InteractiveBlock>
-
-      {/* Visual Comparison */}
-      <InteractiveBlock type="comparison" title="🔬 Side-by-Side Comparison">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 p-4 text-left">Aspect</th>
-                <th className="border border-gray-300 p-4 text-left bg-red-50">Q-Learning (Off-Policy)</th>
-                <th className="border border-gray-300 p-4 text-left bg-blue-50">SARSA (On-Policy)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                {
-                  aspect: 'Update Rule',
-                  qlearn: 'Uses max Q(s\',a\') — best possible action',
-                  sarsa: 'Uses Q(s\',a\') — actual next action'
-                },
-                {
-                  aspect: 'Policy Type',
-                  qlearn: 'Off-policy: learns optimal policy while exploring',
-                  sarsa: 'On-policy: learns the policy it\'s currently following'
-                },
-                {
-                  aspect: 'Risk Behavior',
-                  qlearn: 'Bold: ignores exploration risks',
-                  sarsa: 'Cautious: accounts for exploration mistakes'
-                },
-                {
-                  aspect: 'Convergence',
-                  qlearn: 'Converges to optimal policy',
-                  sarsa: 'Converges to policy that\'s safe under exploration'
-                },
-                {
-                  aspect: 'Best For',
-                  qlearn: 'Simulations, games, when training safely is possible',
-                  sarsa: 'Real robots, safety-critical systems, expensive mistakes'
-                }
-              ].map((row, idx) => (
-                <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="border border-gray-300 p-4 font-semibold">{row.aspect}</td>
-                  <td className="border border-gray-300 p-4 text-sm">{row.qlearn}</td>
-                  <td className="border border-gray-300 p-4 text-sm">{row.sarsa}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </InteractiveBlock>
-
-      {/* Try It Section */}
-      <InteractiveBlock type="interactive" title="🎮 Experience the Difference">
-        <div className="space-y-4">
-          <p className="text-lg leading-relaxed">
-            See SARSA&apos;s cautious approach in action! Try it on a gridworld with obstacles and compare 
-            with Q-Learning. Notice how SARSA might take safer paths, especially early in training.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-300">
-              <h4 className="text-lg font-bold mb-3 text-blue-900">
-                <Shield className="inline w-5 h-5 mr-2" />
-                Try SARSA
-              </h4>
-              <p className="text-sm text-gray-700 mb-4">
-                Watch how SARSA learns a safe policy that respects exploration
+            <div className="p-6 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300">
+              <p className="text-lg font-semibold text-center text-gray-900">
+                The difference? <span className="text-purple-600">SARSA respects its own exploration</span> while Q-Learning assumes optimal behavior.
               </p>
+            </div>
+          </div>
+        </VisualConcept>
+      </SubSection>
+
+      {/* Question 1 */}
+      <Question
+        id="q1"
+        question="What's the key difference between Q-Learning and SARSA?"
+        options={[
+          'SARSA is faster',
+          'Q-Learning learns the optimal policy, SARSA learns the policy it&apos;s following',
+          'SARSA doesn&apos;t use exploration',
+          'Q-Learning requires more memory',
+        ]}
+        correctIndex={1}
+        difficulty="easy"
+        explanation="Perfect! Q-Learning (off-policy) learns about the optimal policy even while exploring. SARSA (on-policy) learns about the policy it&apos;s actually following, including its exploration."
+        hint="Think about what each robot learns - does it learn about the best path, or the path it actually takes?"
+      />
+
+      {/* Section 2: On-Policy vs Off-Policy */}
+      <SubSection id="policy-types" title="On-Policy vs Off-Policy" icon="🎯" variant="concept">
+        <VisualConcept title="Two Learning Philosophies" emoji="🧭" color="purple">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-300"
+              >
+                <div className="text-center mb-4">
+                  <div className="text-5xl mb-2">📘</div>
+                  <h5 className="font-bold text-xl text-orange-900">Off-Policy (Q-Learning)</h5>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-gray-700 text-sm">
+                    Learns about one policy (optimal) while following another (exploratory)
+                  </p>
+                  <div className="p-3 rounded-lg bg-white border border-orange-200 text-sm">
+                    <div className="font-bold text-gray-900 mb-1">Behavior Policy:</div>
+                    <div className="text-gray-600 mb-2">ε-greedy (90% best, 10% random)</div>
+                    <div className="font-bold text-gray-900 mb-1">Target Policy:</div>
+                    <div className="text-gray-600">100% optimal (greedy)</div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300"
+              >
+                <div className="text-center mb-4">
+                  <div className="text-5xl mb-2">📗</div>
+                  <h5 className="font-bold text-xl text-green-900">On-Policy (SARSA)</h5>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-gray-700 text-sm">
+                    Learns about the SAME policy it&apos;s following
+                  </p>
+                  <div className="p-3 rounded-lg bg-white border border-green-200 text-sm">
+                    <div className="font-bold text-gray-900 mb-1">Behavior Policy:</div>
+                    <div className="text-gray-600 mb-2">ε-greedy (90% best, 10% random)</div>
+                    <div className="font-bold text-gray-900 mb-1">Target Policy:</div>
+                    <div className="text-gray-600">ε-greedy (same as behavior!)</div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="p-6 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300">
+              <div className="flex items-start gap-3">
+                <Shield className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                <div>
+                  <h5 className="font-bold text-lg text-gray-900 mb-2">Why This Matters</h5>
+                  <p className="text-gray-700 leading-relaxed">
+                    SARSA learns &quot;given that I explore randomly, what&apos;s the best I can do?&quot; This makes it more conservative near dangers,
+                    since it accounts for the possibility of random exploration into hazards!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </VisualConcept>
+      </SubSection>
+
+      {/* Question 2 */}
+      <Question
+        id="q2"
+        question="Why is SARSA called 'on-policy'?"
+        options={[
+          'Because it&apos;s always on',
+          'Because it learns about the same policy it&apos;s following',
+          'Because it&apos;s more accurate',
+          'Because it updates more frequently',
+        ]}
+        correctIndex={1}
+        difficulty="easy"
+        explanation="Exactly! SARSA is 'on-policy' because the policy it learns about (target policy) is the same as the policy it uses to choose actions (behavior policy). It&apos;s learning about itself!"
+        hint="Think about the name - what does 'on' the policy mean?"
+      />
+
+      {/* Section 3: The SARSA Algorithm */}
+      <SubSection id="algorithm" title="How SARSA Works" icon="⚙️" variant="concept">
+        <VisualConcept title="The SARSA Learning Cycle" emoji="🔄" color="green">
+          <div className="space-y-6">
+            <p className="text-lg text-gray-700 text-center leading-relaxed">
+              SARSA stands for: <span className="font-bold text-green-600">State-Action-Reward-State-Action</span>
+            </p>
+
+            <div className="relative">
+              {[
+                { num: '1', emoji: '📍', title: 'Current State', desc: 'Where am I? (S)', color: 'blue' },
+                { num: '2', emoji: '🎬', title: 'Choose Action', desc: 'What do I do? (A)', color: 'purple' },
+                { num: '3', emoji: '🎁', title: 'Get Reward', desc: 'How good was it? (R)', color: 'orange' },
+                { num: '4', emoji: '📍', title: 'Next State', desc: 'Where did I land? (S&apos;)', color: 'green' },
+                { num: '5', emoji: '🎬', title: 'Next Action', desc: 'What will I do next? (A&apos;)', color: 'pink' },
+              ].map((step, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-white border-2 border-gray-200 mb-3"
+                >
+                  <div className={`flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-${step.color}-400 to-${step.color}-600 flex items-center justify-center text-white font-black text-xl shadow-lg`}>
+                    {step.num}
+                  </div>
+                  <div className="text-3xl">{step.emoji}</div>
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900">{step.title}</div>
+                    <div className="text-sm text-gray-600">{step.desc}</div>
+                  </div>
+                  {idx < 4 && <div className="text-2xl text-gray-400">→</div>}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="p-6 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-300">
+              <p className="text-center text-lg font-semibold text-gray-900">
+                The key: We need to <span className="text-green-600">actually choose A&apos;</span> before updating!
+              </p>
+            </div>
+          </div>
+        </VisualConcept>
+      </SubSection>
+
+      {/* Question 3 */}
+      <Question
+        id="q3"
+        question="What does SARSA stand for?"
+        options={[
+          'State-Action-Reward-State-Action',
+          'Safe And Reliable Safety Algorithm',
+          'Simple Adaptive Reinforcement System Algorithm',
+          'Sequential Action Reward State Analysis',
+        ]}
+        correctIndex={0}
+        difficulty="easy"
+        explanation="Correct! SARSA is an acronym for the sequence of information it uses: State → Action → Reward → (next) State → (next) Action. This sequence is what distinguishes it from Q-Learning."
+        hint="Think about what information the algorithm uses in its update..."
+      />
+
+      {/* Section 4: The Formula */}
+      <SubSection id="formula" title="The Mathematics" icon="📐" variant="concept">
+        <FormulaReveal
+          title="SARSA Update Rule"
+          description="SARSA updates Q-values based on the action that was actually chosen next."
+          formula="Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma Q(s', a') - Q(s, a) \right]"
+          intuition="Take your current belief, see what reward you got plus the value of your ACTUAL next action (not the best one), and adjust. You're learning about the path you actually take."
+          variables={[
+            { symbol: 's', meaning: 'Current state' },
+            { symbol: 'a', meaning: 'Action taken' },
+            { symbol: 'α', meaning: 'Learning rate' },
+            { symbol: 'r', meaning: 'Reward received' },
+            { symbol: 'γ', meaning: 'Discount factor' },
+            { symbol: "s'", meaning: 'Next state' },
+            { symbol: "a'", meaning: 'ACTUAL next action chosen' },
+          ]}
+        />
+
+        <div className="mt-6 p-6 rounded-xl bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-300">
+          <h5 className="font-bold text-xl mb-3 flex items-center gap-2">
+            <Zap className="w-6 h-6 text-orange-600" />
+            Key Difference from Q-Learning
+          </h5>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-white border border-orange-200">
+              <div className="font-bold text-blue-900 mb-2">Q-Learning:</div>
+              <code className="text-sm text-gray-700">Q(s,a) + α[r + γ max Q(s&apos;,·) - Q(s,a)]</code>
+              <p className="text-xs text-gray-600 mt-2">Uses MAX (best possible action)</p>
+            </div>
+            <div className="p-4 rounded-lg bg-white border border-green-200">
+              <div className="font-bold text-green-900 mb-2">SARSA:</div>
+              <code className="text-sm text-gray-700">Q(s,a) + α[r + γ Q(s&apos;,a&apos;) - Q(s,a)]</code>
+              <p className="text-xs text-gray-600 mt-2">Uses ACTUAL next action (a&apos;)</p>
+            </div>
+          </div>
+        </div>
+      </SubSection>
+
+      {/* Question 4 */}
+      <Question
+        id="q4"
+        question="What&apos;s the crucial difference between SARSA and Q-Learning updates?"
+        options={[
+          'SARSA updates faster',
+          'SARSA uses the actual next action (a\'), Q-Learning uses max',
+          'SARSA doesn&apos;t use rewards',
+          'Q-Learning is deterministic',
+        ]}
+        correctIndex={1}
+        difficulty="medium"
+        explanation="Perfect! This is THE key insight. SARSA uses Q(s&apos;,a&apos;) where a&apos; is the action actually chosen (including possible random exploration). Q-Learning uses max Q(s&apos;,·), assuming optimal future actions."
+        hint="Look at the formulas - what&apos;s different in the term that represents future value?"
+      />
+
+      {/* Section 5: When to Use SARSA */}
+      <SubSection id="use-cases" title="When to Use SARSA?" icon="🤔" variant="concept">
+        <VisualConcept title="Safety Matters" emoji="🛡️" color="orange">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-xl bg-green-50 border-2 border-green-300"
+              >
+                <div className="text-5xl text-center mb-3">✅</div>
+                <h5 className="font-bold text-center text-xl text-green-900 mb-3">Use SARSA When:</h5>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>Environment has dangers/penalties</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>Safety during exploration matters</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>Real-world robotics (avoid damage)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">•</span>
+                    <span>Training cost is high</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-xl bg-blue-50 border-2 border-blue-300"
+              >
+                <div className="text-5xl text-center mb-3">🎯</div>
+                <h5 className="font-bold text-center text-xl text-blue-900 mb-3">Use Q-Learning When:</h5>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Want fastest convergence to optimal</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Simulated environments (no real risk)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Games with restarts</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 font-bold">•</span>
+                    <span>Mistakes are cheap</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="p-6 rounded-xl bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-300">
+              <h5 className="font-bold text-lg text-gray-900 mb-2">Real World Example: Cliff Walking</h5>
+              <p className="text-gray-700 leading-relaxed">
+                Near a cliff edge, Q-Learning learns the optimal path right along the cliff (risky but fastest).
+                SARSA learns a safer path further from the edge, accounting for the risk of random exploration into the cliff!
+              </p>
+            </div>
+          </div>
+        </VisualConcept>
+      </SubSection>
+
+      {/* Question 5 */}
+      <Question
+        id="q5"
+        question="In the cliff-walking problem, why does SARSA stay further from the cliff?"
+        options={[
+          'Because it&apos;s slower',
+          'Because it accounts for exploration risk - it might randomly walk off the cliff',
+          'Because it can&apos;t see the cliff',
+          'Because it&apos;s programmed to be conservative',
+        ]}
+        correctIndex={1}
+        difficulty="hard"
+        explanation="Outstanding! This is the KEY insight. SARSA learns about its exploratory policy, so it knows there&apos;s a chance of random actions near the cliff. It learns: 'If I walk near the cliff, I might randomly fall off during exploration.' Q-Learning ignores this because it assumes optimal (non-exploratory) behavior."
+        hint="Remember, SARSA considers what could happen if it explores randomly near danger..."
+      />
+
+      {/* Section 6: Practice */}
+      <SubSection id="practice" title="Try It in the Playground" icon="🎮" variant="practice">
+        <VisualConcept title="See the Difference" emoji="🔬" color="purple">
+          <div className="space-y-4 text-center">
+            <p className="text-lg text-gray-700 leading-relaxed">
+              Compare SARSA vs Q-Learning behavior in dangerous environments!
+            </p>
+
+            <div className="flex justify-center gap-4 flex-wrap">
               <PlaygroundButton
                 algorithm="sarsa"
                 environment="gridworld"
                 parameters={{
                   alpha: 0.1,
-                  gamma: 0.95,
+                  gamma: 0.9,
                   epsilon: 0.1,
-                  n_episodes: 100
+                  n_episodes: 200,
                 }}
                 gridConfig={{
                   width: 6,
                   height: 4,
-                  start: [0, 0],
-                  goal: [5, 3],
-                  obstacles: [[2, 1], [3, 1], [4, 1]],
-                  rewards: [[5, 0, -10], [5, 1, -10], [5, 2, -10]]
+                  start: { x: 0, y: 3 },
+                  goal: { x: 5, y: 3 },
+                  obstacles: [],
+                  rewards: [
+                    { x: 1, y: 2, value: -10 },
+                    { x: 2, y: 2, value: -10 },
+                    { x: 3, y: 2, value: -10 },
+                    { x: 4, y: 2, value: -10 },
+                  ],
                 }}
-              />
-            </div>
+              >
+                🛡️ SARSA (Safe Path)
+              </PlaygroundButton>
 
-            <div className="bg-red-50 rounded-xl p-6 border-2 border-red-300">
-              <h4 className="text-lg font-bold mb-3 text-red-900">
-                <Zap className="inline w-5 h-5 mr-2" />
-                Compare with Q-Learning
-              </h4>
-              <p className="text-sm text-gray-700 mb-4">
-                Run the same scenario with Q-Learning to see the bold approach
-              </p>
               <PlaygroundButton
                 algorithm="qlearning"
                 environment="gridworld"
                 parameters={{
                   alpha: 0.1,
-                  gamma: 0.95,
+                  gamma: 0.9,
                   epsilon: 0.1,
-                  n_episodes: 100
+                  n_episodes: 200,
                 }}
                 gridConfig={{
                   width: 6,
                   height: 4,
-                  start: [0, 0],
-                  goal: [5, 3],
-                  obstacles: [[2, 1], [3, 1], [4, 1]],
-                  rewards: [[5, 0, -10], [5, 1, -10], [5, 2, -10]]
+                  start: { x: 0, y: 3 },
+                  goal: { x: 5, y: 3 },
+                  obstacles: [],
+                  rewards: [
+                    { x: 1, y: 2, value: -10 },
+                    { x: 2, y: 2, value: -10 },
+                    { x: 3, y: 2, value: -10 },
+                    { x: 4, y: 2, value: -10 },
+                  ],
                 }}
-              />
+              >
+                ⚡ Q-Learning (Risky Path)
+              </PlaygroundButton>
+            </div>
+
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-left">
+              <p className="font-bold text-gray-900 mb-2">🔬 Experiment:</p>
+              <div className="text-sm text-gray-700 space-y-1">
+                <div>• Run both algorithms on the same grid</div>
+                <div>• Watch which path each learns</div>
+                <div>• Try different epsilon values (0.1, 0.3)</div>
+                <div>• Notice SARSA stays safer from penalties!</div>
+              </div>
             </div>
           </div>
-        </div>
-      </InteractiveBlock>
+        </VisualConcept>
+      </SubSection>
 
-      {/* When to Use What */}
-      <InteractiveBlock type="insight" title="🎯 Choosing Your Algorithm">
-        <div className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-green-50 rounded-lg p-6 border-2 border-green-300">
-              <h4 className="font-bold text-green-900 mb-3 text-lg">✅ Use Q-Learning When:</h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 font-bold">•</span>
-                  Training in a simulator (safe failures)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 font-bold">•</span>
-                  You want the absolute optimal policy
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 font-bold">•</span>
-                  Learning from offline datasets
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-600 font-bold">•</span>
-                  Games, puzzles, discrete action spaces
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
-              <h4 className="font-bold text-blue-900 mb-3 text-lg">🛡️ Use SARSA When:</h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  Training on real hardware (robots, drones)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  Mistakes are expensive or dangerous
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  You want safe behavior during training
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-600 font-bold">•</span>
-                  Environments with high-risk states
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </InteractiveBlock>
-
-      {/* Key Takeaways */}
-      <motion.div 
-        className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border-2 border-green-300"
-        whileHover={{ scale: 1.01 }}
+      {/* Summary */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="mt-12 p-8 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-2xl"
       >
-        <h3 className="text-2xl font-bold mb-4 text-green-900">
-          <Target className="inline w-7 h-7 mr-2" />
-          Key Takeaways
+        <h3 className="text-3xl font-black mb-6 flex items-center gap-3">
+          <Shield className="w-8 h-8" />
+          SARSA Mastery
         </h3>
-        <ul className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
-            'SARSA is on-policy: it learns the value of the policy it\'s currently following',
-            'Q-Learning is off-policy: it learns the optimal policy regardless of current behavior',
-            'SARSA accounts for exploration risks, making it safer during training',
-            'Q-Learning finds the true optimal policy but can be risky while learning',
-            'Choose SARSA for safety-critical applications, Q-Learning for maximum performance'
-          ].map((takeaway, idx) => (
-            <motion.li
+            { emoji: '📗', text: 'On-policy: learns about itself' },
+            { emoji: '🛡️', text: 'Safer during exploration' },
+            { emoji: '🔄', text: 'Uses S-A-R-S&apos;-A&apos; sequence' },
+            { emoji: '⚖️', text: 'Choose based on safety needs' },
+          ].map((item, idx) => (
+            <motion.div
               key={idx}
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="flex items-start gap-3 text-gray-800"
+              className="flex items-center gap-3 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20"
             >
-              <span className="text-green-600 font-bold text-xl">✓</span>
-              <span className="flex-1">{takeaway}</span>
-            </motion.li>
+              <span className="text-3xl">{item.emoji}</span>
+              <span className="font-semibold text-lg">{item.text}</span>
+            </motion.div>
           ))}
-        </ul>
+        </div>
       </motion.div>
     </LessonLayout>
   )
 }
-

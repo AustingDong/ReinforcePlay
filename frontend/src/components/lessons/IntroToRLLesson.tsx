@@ -1,378 +1,359 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Brain, Target, Zap, Award, Play, Pause, RotateCcw, ChevronRight } from 'lucide-react'
+import { motion } from 'framer-motion'
+import LessonLayout from './LessonLayout'
+import SubSection from './SubSection'
+import Question from './Question'
+import VisualConcept from './VisualConcept'
+import { Bot, Target, Sparkles, Brain } from 'lucide-react'
 
 export default function IntroToRLLesson() {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [dogPosition, setDogPosition] = useState({ x: 50, y: 50 })
-  const [ballPosition] = useState({ x: 200, y: 50 })
-  const [treats, setTreats] = useState(0)
-  const [selectedCard, setSelectedCard] = useState<number | null>(null)
-
-  // Interactive RL Loop
-  const rlSteps = [
-    { icon: Target, title: 'Observe', desc: 'See the situation', color: 'blue' },
-    { icon: Zap, title: 'Act', desc: 'Make a choice', color: 'purple' },
-    { icon: Award, title: 'Reward', desc: 'Get feedback', color: 'yellow' },
-    { icon: Brain, title: 'Learn', desc: 'Improve strategy', color: 'green' }
-  ]
-
-  useEffect(() => {
-    if (isAnimating) {
-      const timer = setTimeout(() => {
-        setCurrentStep((prev) => (prev + 1) % 4)
-      }, 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [currentStep, isAnimating])
-
-  const simulateDog = () => {
-    const distance = Math.hypot(ballPosition.x - dogPosition.x, ballPosition.y - dogPosition.y)
-    
-    if (distance < 30) {
-      // Got the ball!
-      setTreats(prev => prev + 1)
-      setDogPosition({ x: 50, y: 50 })
-    } else {
-      // Move towards ball
-      const angle = Math.atan2(ballPosition.y - dogPosition.y, ballPosition.x - dogPosition.x)
-      const step = 30
-      setDogPosition({
-        x: dogPosition.x + Math.cos(angle) * step,
-        y: dogPosition.y + Math.sin(angle) * step
-      })
-    }
-  }
-
   return (
-    <div className="max-w-6xl mx-auto space-y-12">
-      {/* Animated Hero with Floating Elements */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 p-12 md:p-20"
-      >
-        {/* Floating particles */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-white rounded-full opacity-20"
-            animate={{
-              x: [Math.random() * 400, Math.random() * 400],
-              y: [Math.random() * 300, Math.random() * 300],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-
-        <div className="relative z-10 text-center text-white">
-          <motion.div
-            animate={{ 
-              rotate: [0, 5, -5, 0],
-              scale: [1, 1.1, 1]
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="inline-block mb-6"
-          >
-            <Brain className="w-24 h-24 mx-auto" strokeWidth={1.5} />
-          </motion.div>
-          
-          <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-5xl md:text-7xl font-bold mb-4"
-          >
-            Reinforcement Learning
-          </motion.h1>
-          
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-2xl text-blue-100"
-          >
-            Teaching machines to learn like humans 🚀
-          </motion.p>
-        </div>
-      </motion.section>
-
-      {/* Interactive Dog Training Demo */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 shadow-xl"
-      >
-        <h2 className="text-3xl font-bold text-center mb-4">🐕 Try It: Train a Dog!</h2>
-        <p className="text-center text-gray-700 mb-6">
-          Click the dog to make it move towards the ball. Give it a treat when it succeeds!
-        </p>
-
-        <div className="relative bg-white rounded-2xl p-8 h-64 border-4 border-amber-200">
-          {/* Dog */}
-          <motion.div
-            animate={{ x: dogPosition.x, y: dogPosition.y }}
-            transition={{ type: "spring", stiffness: 100 }}
-            className="absolute cursor-pointer"
-            onClick={simulateDog}
-          >
-            <motion.div
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              className="text-5xl"
+    <LessonLayout
+      title="Welcome to Reinforcement Learning"
+      subtitle="Begin your journey into the world of intelligent agents"
+      icon="📚"
+      difficulty="beginner"
+      duration="10 minutes"
+      objectives={[
+        'Understand what Reinforcement Learning is',
+        'See how RL differs from other learning approaches',
+        'Recognize real-world RL applications',
+      ]}
+    >
+      {/* Section 1: What is RL? */}
+      <SubSection id="what-is-rl" title="What is Reinforcement Learning?" icon="🧠" variant="story">
+        <VisualConcept title="Learning by Doing" emoji="🎮" color="blue">
+          <div className="space-y-6">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-lg text-gray-700 text-center leading-relaxed"
             >
-              🐕
-            </motion.div>
-          </motion.div>
+              Imagine learning to ride a bike. Nobody gives you a rulebook. You just...{' '}
+              <span className="font-bold text-blue-600">try, fall, adjust, and improve</span>.
+            </motion.p>
 
-          {/* Ball */}
-          <div
-            className="absolute text-4xl"
-            style={{ left: ballPosition.x, top: ballPosition.y }}
-          >
-            ⚽
-          </div>
-
-          {/* Treats Counter */}
-          <div className="absolute top-4 right-4 bg-amber-400 text-white px-4 py-2 rounded-full font-bold shadow-lg">
-            🦴 Treats: {treats}
-          </div>
-        </div>
-
-        <p className="text-center text-sm text-gray-600 mt-4">
-          This is RL! The dog <strong>learns</strong> by trying → getting rewards → improving! 🎉
-        </p>
-      </motion.section>
-
-      {/* Interactive RL Loop */}
-      <section className="bg-white rounded-3xl p-8 shadow-xl">
-        <h2 className="text-3xl font-bold text-center mb-8">
-          The Learning Loop
-        </h2>
-
-        <div className="flex justify-center items-center gap-4 mb-8">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsAnimating(!isAnimating)}
-            className={`px-6 py-3 rounded-xl font-bold text-white ${
-              isAnimating ? 'bg-red-500' : 'bg-green-500'
-            } shadow-lg flex items-center gap-2`}
-          >
-            {isAnimating ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            {isAnimating ? 'Pause' : 'Start'}
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setCurrentStep(0)}
-            className="px-6 py-3 rounded-xl font-bold bg-gray-500 text-white shadow-lg flex items-center gap-2"
-          >
-            <RotateCcw className="w-5 h-5" />
-            Reset
-          </motion.button>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {rlSteps.map((step, idx) => {
-            const Icon = step.icon
-            const isActive = currentStep === idx
-            const colorMap: Record<string, string> = {
-              blue: 'from-blue-500 to-blue-600',
-              purple: 'from-purple-500 to-purple-600',
-              yellow: 'from-yellow-400 to-orange-500',
-              green: 'from-green-500 to-emerald-600'
-            }
-            
-            return (
-              <motion.div
-                key={idx}
-                animate={{
-                  scale: isActive ? 1.1 : 1,
-                  rotateY: isActive ? 360 : 0
-                }}
-                transition={{ duration: 0.5 }}
-                className={`relative p-6 rounded-2xl shadow-lg cursor-pointer ${
-                  isActive ? 'ring-4 ring-offset-2 ring-blue-400' : ''
-                }`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${colorMap[step.color]} rounded-2xl opacity-${isActive ? '100' : '10'}`} />
-                
-                <div className="relative text-center">
-                  <motion.div
-                    animate={{ rotate: isActive ? [0, 10, -10, 0] : 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <Icon className={`w-12 h-12 mx-auto mb-3 ${isActive ? 'text-white' : 'text-gray-700'}`} />
-                  </motion.div>
-                  <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-900'}`}>
-                    {idx + 1}. {step.title}
-                  </h3>
-                  <p className={`text-sm ${isActive ? 'text-white' : 'text-gray-600'}`}>
-                    {step.desc}
-                  </p>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        <motion.div
-          animate={{ opacity: isAnimating ? 1 : 0 }}
-          className="mt-6 text-center text-gray-600"
-        >
-          <p className="text-lg">
-            ↻ Repeat thousands of times to master any skill!
-          </p>
-        </motion.div>
-      </section>
-
-      {/* Interactive Comparison Cards */}
-      <section className="space-y-6">
-        <h2 className="text-3xl font-bold text-center">
-          How is RL Different?
-        </h2>
-        
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { 
-              id: 0,
-              emoji: '👨‍🏫', 
-              title: 'Supervised', 
-              short: 'Teacher shows answers',
-              long: 'Like learning with flashcards - someone tells you the right answer',
-              example: 'This is a cat → Learn to recognize cats',
-              color: 'from-green-400 to-emerald-500'
-            },
-            { 
-              id: 1,
-              emoji: '🔍', 
-              title: 'Unsupervised', 
-              short: 'Find patterns alone',
-              long: 'Discover hidden patterns without any guidance or labels',
-              example: 'Group similar photos without being told what they are',
-              color: 'from-blue-400 to-cyan-500'
-            },
-            { 
-              id: 2,
-              emoji: '🎮', 
-              title: 'Reinforcement', 
-              short: 'Learn by trying',
-              long: 'Learn through trial, error, and rewards - like playing a game!',
-              example: 'Try actions → Get points → Improve strategy',
-              color: 'from-purple-400 to-pink-500',
-              highlight: true
-            }
-          ].map((card) => (
             <motion.div
-              key={card.id}
-              whileHover={{ scale: 1.05, rotateY: 5 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedCard(selectedCard === card.id ? null : card.id)}
-              className={`relative cursor-pointer rounded-2xl p-6 shadow-xl overflow-hidden ${
-                card.highlight ? 'ring-4 ring-purple-400' : ''
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex justify-center items-center gap-6 flex-wrap"
+            >
+              <div className="text-center p-4">
+                <div className="text-6xl mb-2">🚲</div>
+                <div className="text-sm font-semibold text-gray-600">Try</div>
+              </div>
+              <div className="text-4xl">→</div>
+              <div className="text-center p-4">
+                <div className="text-6xl mb-2">😣</div>
+                <div className="text-sm font-semibold text-gray-600">Fall</div>
+              </div>
+              <div className="text-4xl">→</div>
+              <div className="text-center p-4">
+                <div className="text-6xl mb-2">💡</div>
+                <div className="text-sm font-semibold text-gray-600">Learn</div>
+              </div>
+              <div className="text-4xl">→</div>
+              <div className="text-center p-4">
+                <div className="text-6xl mb-2">🏆</div>
+                <div className="text-sm font-semibold text-gray-600">Master</div>
+              </div>
+            </motion.div>
+
+            <div className="p-6 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-blue-300">
+              <p className="text-lg font-semibold text-center text-gray-900">
+                That's <span className="text-blue-600">Reinforcement Learning</span>: learning through trial, error, and feedback.
+              </p>
+            </div>
+          </div>
+        </VisualConcept>
+      </SubSection>
+
+      {/* Question 1 */}
+      <Question
+        id="q1"
+        question="What is the key characteristic of Reinforcement Learning?"
+        options={[
+          'Following a pre-defined set of rules',
+          'Learning from labeled examples',
+          'Learning through interaction and feedback',
+          'Memorizing all possible solutions',
+        ]}
+        correctIndex={2}
+        difficulty="easy"
+        explanation="Exactly! RL is all about learning through interaction with an environment and receiving feedback (rewards or penalties) to improve over time."
+        hint="Think about how you learned to ride a bike - was it from reading a book or from doing it?"
+      />
+
+      {/* Section 2: The Three Pillars */}
+      <SubSection id="pillars" title="The Three Pillars of RL" icon="🏛️" variant="concept">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              emoji: '🤖',
+              title: 'Agent',
+              desc: 'The learner/decision-maker',
+              examples: ['Robot', 'AI player', 'Trading bot'],
+              color: 'blue',
+            },
+            {
+              emoji: '🌍',
+              title: 'Environment',
+              desc: 'The world the agent interacts with',
+              examples: ['Game level', 'Real world', 'Simulation'],
+              color: 'green',
+            },
+            {
+              emoji: '🎁',
+              title: 'Reward',
+              desc: 'Feedback signal (good/bad)',
+              examples: ['+10 points', '-5 penalty', '+100 win'],
+              color: 'purple',
+            },
+          ].map((pillar, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.2 }}
+              className={`p-6 rounded-2xl border-2 bg-gradient-to-br ${
+                pillar.color === 'blue'
+                  ? 'from-blue-50 to-cyan-50 border-blue-300'
+                  : pillar.color === 'green'
+                  ? 'from-green-50 to-emerald-50 border-green-300'
+                  : 'from-purple-50 to-pink-50 border-purple-300'
               }`}
             >
               <motion.div
-                animate={{ 
-                  opacity: selectedCard === card.id ? 1 : 0.2,
-                  scale: selectedCard === card.id ? 1 : 0.9
-                }}
-                className={`absolute inset-0 bg-gradient-to-br ${card.color}`}
-              />
-              
-              <div className="relative text-white">
-                <div className="text-6xl mb-4 text-center">{card.emoji}</div>
-                <h3 className="text-2xl font-bold mb-2 text-center">{card.title}</h3>
-                <p className="text-center mb-4">{card.short}</p>
-                
-                <AnimatePresence>
-                  {selectedCard === card.id && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-3"
-                    >
-                      <div className="bg-white bg-opacity-20 rounded-lg p-3 backdrop-blur">
-                        <p className="text-sm">{card.long}</p>
-                      </div>
-                      <div className="bg-white bg-opacity-20 rounded-lg p-3 backdrop-blur">
-                        <p className="text-xs font-mono">{card.example}</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                {selectedCard !== card.id && (
-                  <p className="text-center text-sm opacity-75">Click to learn more</p>
-                )}
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-6xl text-center mb-4"
+              >
+                {pillar.emoji}
+              </motion.div>
+              <h4 className="text-xl font-bold text-gray-900 text-center mb-2">{pillar.title}</h4>
+              <p className="text-gray-700 text-center mb-4">{pillar.desc}</p>
+              <div className="space-y-2">
+                {pillar.examples.map((ex, i) => (
+                  <div key={i} className="text-sm text-center px-3 py-1 rounded-full bg-white/60 border border-gray-200">
+                    {ex}
+                  </div>
+                ))}
               </div>
             </motion.div>
           ))}
         </div>
-      </section>
 
-      {/* Real World - Visual Icons */}
-      <section className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 shadow-xl">
-        <h2 className="text-3xl font-bold text-center mb-8">
-          🌍 Where You've Seen RL
-        </h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mt-8 p-6 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300"
+        >
+          <h4 className="font-bold text-xl mb-3 text-center flex items-center justify-center gap-2">
+            <Sparkles className="w-6 h-6 text-purple-600" />
+            The RL Loop
+          </h4>
+          <div className="flex items-center justify-center gap-4 flex-wrap text-lg font-semibold text-gray-800">
+            <span>🤖 Agent</span>
+            <span>→</span>
+            <span>🎬 Action</span>
+            <span>→</span>
+            <span>🌍 Environment</span>
+            <span>→</span>
+            <span>🎁 Reward</span>
+            <span>→</span>
+            <span>🔄 Repeat</span>
+          </div>
+        </motion.div>
+      </SubSection>
+
+      {/* Question 2 */}
+      <Question
+        id="q2"
+        question="In the RL loop, what does the environment provide to the agent?"
+        options={[
+          'Only the next possible actions',
+          'A reward signal and the new state',
+          'The optimal action to take',
+          'A complete map of all states',
+        ]}
+        correctIndex={1}
+        difficulty="easy"
+        explanation="Perfect! After the agent takes an action, the environment responds with two things: a reward (feedback) and the new state (where the agent ended up)."
+        hint="Think about what you need to know after taking an action - did it work (reward), and where are you now (new state)?"
+      />
+
+      {/* Section 3: RL vs Other Learning */}
+      <SubSection id="comparison" title="How is RL Different?" icon="🔍" variant="concept">
+        <VisualConcept title="Three Types of Learning" emoji="🎓" color="purple">
+          <div className="space-y-4">
+            {[
+              {
+                type: 'Supervised Learning',
+                emoji: '👨‍🏫',
+                desc: 'Learn from labeled examples with a teacher',
+                example: 'Showing cat photos labeled "cat"',
+                color: 'bg-blue-100 border-blue-300',
+              },
+              {
+                type: 'Unsupervised Learning',
+                emoji: '🔎',
+                desc: 'Find patterns in unlabeled data',
+                example: 'Grouping similar photos together',
+                color: 'bg-green-100 border-green-300',
+              },
+              {
+                type: 'Reinforcement Learning',
+                emoji: '🎮',
+                desc: 'Learn through trial and error with rewards',
+                example: 'Playing a game and getting points',
+                color: 'bg-purple-100 border-purple-300',
+                highlight: true,
+              },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.15 }}
+                className={`p-4 rounded-xl border-2 ${item.color} ${
+                  item.highlight ? 'ring-4 ring-purple-300 ring-offset-2' : ''
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl flex-shrink-0">{item.emoji}</div>
+                  <div className="flex-1">
+                    <h5 className="font-bold text-lg text-gray-900 mb-1">{item.type}</h5>
+                    <p className="text-gray-700 mb-2">{item.desc}</p>
+                    <div className="text-sm text-gray-600 italic">Example: {item.example}</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </VisualConcept>
+      </SubSection>
+
+      {/* Question 3 */}
+      <Question
+        id="q3"
+        question="What makes Reinforcement Learning unique compared to supervised learning?"
+        options={[
+          'RL is faster',
+          'RL learns from interaction and delayed rewards, not labeled examples',
+          'RL requires less data',
+          'RL is only for games',
+        ]}
+        correctIndex={1}
+        difficulty="medium"
+        explanation="Exactly! Unlike supervised learning where you have labeled examples, RL learns through interaction with an environment and must deal with delayed rewards - actions taken now might not show their effects until much later!"
+        hint="In RL, there's no teacher telling you the 'correct' answer for each situation."
+      />
+
+      {/* Section 4: Real World Applications */}
+      <SubSection id="applications" title="Where is RL Used?" icon="🌟" variant="story">
+        <VisualConcept title="RL Powers Modern AI" emoji="🚀" color="orange">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { emoji: '🎮', title: 'Game AI', desc: 'AlphaGo, Dota 2, Atari games' },
+              { emoji: '🤖', title: 'Robotics', desc: 'Robot walking, manipulation, navigation' },
+              { emoji: '💬', title: 'ChatGPT', desc: 'RLHF (Reinforcement Learning from Human Feedback)' },
+              { emoji: '🚗', title: 'Self-Driving', desc: 'Autonomous vehicles learning to drive' },
+              { emoji: '📈', title: 'Trading', desc: 'Stock trading bots making decisions' },
+              { emoji: '⚡', title: 'Energy', desc: 'Optimizing power grid efficiency' },
+            ].map((app, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                transition={{ delay: idx * 0.1 }}
+                className="p-4 rounded-xl bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow"
+              >
+                <div className="text-4xl mb-2 text-center">{app.emoji}</div>
+                <h5 className="font-bold text-center text-gray-900 mb-1">{app.title}</h5>
+                <p className="text-sm text-center text-gray-600">{app.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </VisualConcept>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-6 p-6 rounded-xl bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-300"
+        >
+          <div className="flex items-start gap-3">
+            <Brain className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
+            <div>
+              <h5 className="font-bold text-lg text-gray-900 mb-2">Fun Fact!</h5>
+              <p className="text-gray-700 leading-relaxed">
+                ChatGPT and other large language models use RL (specifically RLHF) in their training to learn from human preferences.
+                When you thumbs up or down a response, you're helping the RL algorithm learn!
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </SubSection>
+
+      {/* Question 4 */}
+      <Question
+        id="q4"
+        question="Why is RL particularly well-suited for game playing and robotics?"
+        options={[
+          'Because they have unlimited data',
+          'Because they can try many actions and learn from the outcomes in a trial-and-error manner',
+          'Because they don&apos;t need rewards',
+          'Because they are simple problems',
+        ]}
+        correctIndex={1}
+        difficulty="medium"
+        explanation="Excellent! Games and robotics are perfect for RL because agents can try many different actions, see what happens, and learn from the outcomes. A robot can try walking different ways, and a game AI can try different strategies until it finds what works best!"
+        hint="Think about how you'd teach a robot to walk - could you write down exact instructions, or would trial-and-error work better?"
+      />
+
+      {/* Summary */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="mt-12 p-8 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-2xl"
+      >
+        <h3 className="text-3xl font-black mb-6 flex items-center gap-3">
+          <Target className="w-8 h-8" />
+          Your RL Foundation
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
-            { emoji: '🎮', label: 'AlphaGo', desc: 'Beat world champions' },
-            { emoji: '🚗', label: 'Self-Driving', desc: 'Navigate roads' },
-            { emoji: '🤖', label: 'Robots', desc: 'Learn to walk' },
-            { emoji: '📈', label: 'Trading', desc: 'Optimize profits' },
+            { emoji: '🤖', text: 'Agent interacts with environment' },
+            { emoji: '🎁', text: 'Learns from reward feedback' },
+            { emoji: '🔄', text: 'Trial and error over time' },
+            { emoji: '🌟', text: 'Powers modern AI systems' },
           ].map((item, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              className="bg-white rounded-2xl p-6 shadow-lg text-center cursor-pointer"
+              className="flex items-center gap-3 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20"
             >
-              <div className="text-6xl mb-3">{item.emoji}</div>
-              <h3 className="font-bold text-gray-900 mb-1">{item.label}</h3>
-              <p className="text-sm text-gray-600">{item.desc}</p>
+              <span className="text-3xl">{item.emoji}</span>
+              <span className="font-semibold text-lg">{item.text}</span>
             </motion.div>
           ))}
         </div>
-      </section>
 
-      {/* Call to Action */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-12 text-center text-white shadow-2xl"
-      >
-        <h2 className="text-4xl font-bold mb-4">Ready to Start Learning?</h2>
-        <p className="text-xl mb-8 text-purple-100">
-          Begin with the simplest problem: the Multi-Armed Bandit! 🎰
-        </p>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-8 py-4 bg-white text-purple-600 rounded-full font-bold text-lg shadow-xl flex items-center gap-3 mx-auto"
-        >
-          Start First Lesson
-          <ChevronRight className="w-6 h-6" />
-        </motion.button>
-      </motion.section>
-    </div>
+        <div className="mt-6 p-4 rounded-xl bg-white/20 backdrop-blur-sm">
+          <p className="text-center text-lg font-semibold">
+            Ready to dive deeper? Let's explore specific algorithms! 🚀
+          </p>
+        </div>
+      </motion.div>
+    </LessonLayout>
   )
 }
