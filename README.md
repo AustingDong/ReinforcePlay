@@ -13,7 +13,28 @@ ReinforcePlay is a full-stack educational platform that makes RL concepts access
 
 ## 🚀 Quick Deploy
 
-### Simple Deployment (No Docker)
+### ⚡ AWS Quick Deploy (Recommended)
+```bash
+# First time setup (handles everything)
+./aws-setup.sh
+
+# After code updates
+./aws-update.sh
+
+# Check status
+./aws-status.sh
+```
+
+Your app is now live on `http://YOUR_SERVER_IP`! See [AWS_QUICK_START.md](./AWS_QUICK_START.md) for full guide.
+
+**Features:**
+- ✅ Automatic service setup with systemd
+- ✅ Auto-restart on crashes
+- ✅ Starts on server reboot
+- ✅ One-command updates
+- ✅ Production-ready
+
+### Simple Deployment (Alternative)
 ```bash
 # One-time setup
 ./deploy-simple.sh
@@ -22,14 +43,14 @@ ReinforcePlay is a full-stack educational platform that makes RL concepts access
 ./run-public.sh
 ```
 
-Your app is now live on `http://YOUR_SERVER_IP`! See [SIMPLE_DEPLOY.md](./SIMPLE_DEPLOY.md) for details.
+See [SIMPLE_DEPLOY.md](./SIMPLE_DEPLOY.md) for details.
 
 ### Docker Deployment (Optional)
 ```bash
 ./deploy.sh
 ```
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for Docker and advanced production setup.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for Docker setup.
 
 ---
 
