@@ -1,7 +1,31 @@
 import axios from 'axios'
 import type { AlgorithmType, SimulationConfig } from '@/store/useAppStore'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+// Smart API URL detection
+// In production, use the current hostname with port 8000
+// In development, use localhost:8000
+const getApiBase = (): string => {
+  // Check environment variable first
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE
+  }
+  
+  // In production (not localhost), construct API URL from current host
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    // If accessing via IP or domain (not localhost), use the same host with port 8000
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `http://${hostname}:8000`
+    }
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:8000'
+}
+
+const API_BASE = getApiBase()
+
+console.log('[API] Using API base URL:', API_BASE)
 
 const api = axios.create({
   baseURL: API_BASE,
