@@ -91,16 +91,24 @@ cd frontend
 
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
-    echo "Installing Node.js dependencies..."
-    npm install --quiet
+    echo "Installing Node.js dependencies (this may take a few minutes)..."
+    npm install
+else
+    echo "✅ Dependencies already installed"
 fi
 
-# Build frontend
-echo "Building frontend..."
-npm run build
+# Clear cache and build
+echo "Building frontend (this may take 2-3 minutes)..."
+echo "🔨 Cleaning old build..."
+rm -rf dist
+
+echo "🔨 Building with Vite..."
+# Increase memory limit and show progress
+NODE_OPTIONS="--max-old-space-size=2048" npm run build -- --logLevel info
 
 if [ ! -d "dist" ]; then
     echo "❌ Frontend build failed - dist folder not created"
+    echo "Check logs above for errors"
     exit 1
 fi
 

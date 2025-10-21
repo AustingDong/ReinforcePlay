@@ -43,16 +43,22 @@ cd frontend
 
 # Update dependencies if package.json changed
 if [ -f "package-lock.json" ]; then
-    echo "Checking for new dependencies..."
-    npm install --quiet
+    echo "Updating dependencies..."
+    npm install
 fi
 
 # Build
-echo "Building..."
-npm run build
+echo "Building frontend (this may take 2-3 minutes)..."
+echo "🔨 Cleaning old build..."
+rm -rf dist
+
+echo "🔨 Building with Vite..."
+# Increase memory limit and show progress
+NODE_OPTIONS="--max-old-space-size=2048" npm run build -- --logLevel info
 
 if [ ! -d "dist" ]; then
     echo "❌ Build failed - dist folder not created"
+    echo "Check logs above for errors"
     exit 1
 fi
 

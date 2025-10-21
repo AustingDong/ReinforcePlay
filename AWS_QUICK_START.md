@@ -189,15 +189,22 @@ sudo kill -9 <PID>
 sudo systemctl restart reinforceplay-*
 ```
 
-### Frontend build fails
+### Frontend build fails or gets stuck
 ```bash
+# Try quick build script
+./quick-frontend-build.sh
+
+# Or clear everything and rebuild
 cd frontend
-rm -rf node_modules dist
+rm -rf node_modules dist node_modules/.vite
 npm install
-npm run build
+NODE_OPTIONS="--max-old-space-size=2048" npm run build
 cd ..
 sudo systemctl restart reinforceplay-frontend
 ```
+
+**If build is too slow on small instances:**
+Build locally and upload `dist` folder. See [BUILD_TROUBLESHOOTING.md](./BUILD_TROUBLESHOOTING.md)
 
 ### Backend crashes
 ```bash
